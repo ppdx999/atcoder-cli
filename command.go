@@ -175,13 +175,13 @@ func (c *Command) AddCommand(cmd *Command) {
 	c.commands = append(c.commands, cmd)
 }
 
-func (c *Command) Execute() ExitCode {
+func (c *Command) Execute(args []string) ExitCode {
 	if c.hasParent() {
 		fmt.Fprintf(os.Stderr, "Execute non root command")
 		return ExitError
 	}
 
-	cmd, args := c.traverse(os.Args[1:])
+	cmd, args := c.traverse(args)
 
 	if !cmd.runnable() || cmd.isHelp(args) {
 		return cmd.usage(os.Stderr)

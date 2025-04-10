@@ -5,52 +5,76 @@ import (
 	"testing"
 )
 
-func TestCommandExecute(t *testing.T) {
-	var called bool
+func TestMain(m *testing.M) {
+	// disable stderr
+	osStderr := os.Stderr
+	defer func() {
+		os.Stderr = osStderr
+	}()
+	os.Stderr = nil
+
+	os.Exit(m.Run())
+}
+
+func createCmd(name string, mock func(cmd *Command, args []string) ExitCode) *Command {
 	root := &Command{
-		Usage: "root",
-		Run: func(cmd *Command, args []string) ExitCode {
-			called = true
-			return ExitOK
-		},
+		Usage: name,
+		Run:   mock,
 	}
-	os.Args = []string{"root", "sub"}
-	root.Execute()
-	if !called {
+	return root
+}
+
+func createMockFn() (func(cmd *Command, args []string) ExitCode, func() bool) {
+	isCalled := false
+
+	mockCalled := func() bool {
+		return isCalled
+	}
+
+	mockFn := func(cmd *Command, args []string) ExitCode {
+		isCalled = true
+		return ExitOK
+	}
+
+	return mockFn, mockCalled
+}
+
+func TestCommandExecute(t *testing.T) {
+	mockFn, mockCalled := createMockFn()
+	root := createCmd("root", mockFn)
+	exitCode := root.Execute([]string{})
+
+	if exitCode != ExitOK {
+		t.Error("root command finished with error")
+	}
+
+	if !mockCalled() {
 		t.Error("root command was not executed")
 	}
 }
 
 func TestSubcommandExecute(t *testing.T) {
-	var called bool
-	root := &Command{
-		Usage: "root",
-	}
-	sub := &Command{
-		Usage: "sub",
-		Run: func(cmd *Command, args []string) ExitCode {
-			called = true
-			return ExitOK
-		},
-	}
-	os.Args = []string{"root", "sub"}
+	mockFn, mockCalled := createMockFn()
+	root := createCmd("root", nil)
+	sub := createCmd("sub", mockFn)
 	root.AddCommand(sub)
-	root.Execute()
-	if !called {
+
+	exitCode := root.Execute([]string{"sub"})
+
+	if exitCode != ExitOK {
+		t.Error("root command finished with error")
+	}
+	if !mockCalled() {
 		t.Error("subcommand was not executed")
 	}
 }
 
 func TestErrorExecuteNonRootCmd(t *testing.T) {
-	root := &Command{
-		Usage: "root",
-	}
-	sub := &Command{
-		Usage: "sub",
-	}
+	root := createCmd("root", nil)
+	sub := createCmd("sub", nil)
 	root.AddCommand(sub)
-	os.Args = []string{"root", "sub"}
-	if sub.Execute() != ExitError {
+
+	if sub.Execute([]string{"sub"}) != ExitError {
 		t.Error("Execute Subcommand should be error")
 	}
 }
