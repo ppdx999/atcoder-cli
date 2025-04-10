@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"text/template"
 )
 
 type ExitCode int
@@ -13,10 +14,6 @@ const (
 	ExitOK    ExitCode = 0
 	ExitError ExitCode = 1
 )
-
-func rpad(s string, padStr string, pLen int) string {
-	return s + strings.Repeat(padStr, pLen-len(s))
-}
 
 type Command struct {
 	Usage    string
@@ -99,16 +96,6 @@ func (c *Command) description() string {
 	return d
 }
 
-func (c *Command) maxSubcommandNameLen() int {
-	maxLen := 0
-	for _, cmd := range c.commands {
-		if len(cmd.name()) > maxLen {
-			maxLen = len(cmd.name())
-		}
-	}
-	return maxLen
-}
-
 func (c *Command) hasDescription() bool {
 	return c.Long != "" || c.Short != ""
 }
@@ -124,26 +111,61 @@ func (c *Command) usageLine() string {
 	return c.Usage
 }
 
+const usageTemplate = `Usage:
+{{- if .Runnable }}
+  {{ .UsageLine }}
+{{- end }}
+{{- if .HasSubCommands }}
+  {{ .CommandPath }} [command]
+
+Available Commands:
+{{- range .SubCommands }}
+  {{ printf "%-16s %s" .Name .Desc }}
+{{- end }}
+{{- end }}
+{{- if .HasAliases }}
+
+Aliases:
+  {{ .AliasesLine }}
+{{- end }}
+{{- if .HasDescription }}
+
+Description:
+  {{ .Description }}
+{{- end }}
+`
+
+type cmdOverview struct {
+	Name string
+	Desc string
+}
+
+func (c *Command) subcommandOverview() []cmdOverview {
+	var overview []cmdOverview
+	for _, cmd := range c.commands {
+		overview = append(overview, cmdOverview{
+			Name: cmd.name(),
+			Desc: cmd.Short,
+		})
+	}
+	return overview
+}
+
 func (c *Command) usage(w io.Writer) ExitCode {
-	fmt.Fprint(w, "Usage:")
-	if c.runnable() {
-		fmt.Fprintf(w, "\n  %s", c.usageLine())
-	}
-	if c.hasSubCommands() {
-		fmt.Fprintf(w, "\n  %s [command]", c.commandPath())
-		fmt.Fprintf(w, "\n\nAvailable Commands:")
-		for _, cmd := range c.commands {
-			name := rpad(cmd.name(), " ", c.maxSubcommandNameLen()+2)
-			fmt.Fprintf(w, "\n  %s %s", name, cmd.Short)
-		}
-	}
-	if len(c.Aliases) > 0 {
-		fmt.Fprintf(w, "\n\nAliases:")
-		fmt.Fprintf(w, "\n  %s", c.nameAndAliases())
-	}
-	if c.hasDescription() {
-		fmt.Fprintf(w, "\n\nDescription:")
-		fmt.Fprintf(w, "\n  %s", c.description())
+	tmpl := template.Must(template.New("usage").Parse(usageTemplate))
+	err := tmpl.Execute(w, map[string]any{
+		"Runnable":       c.runnable(),
+		"UsageLine":      c.usageLine(),
+		"HasSubCommands": c.hasSubCommands(),
+		"CommandPath":    c.commandPath(),
+		"SubCommands":    c.subcommandOverview(),
+		"HasAliases":     len(c.Aliases) > 0,
+		"AliasesLine":    c.nameAndAliases(),
+		"HasDescription": c.hasDescription(),
+		"Description":    c.description(),
+	})
+	if err != nil {
+		fmt.Fprintf(w, "Error rendering usage: %v\n", err)
 	}
 	return ExitError
 }
