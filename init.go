@@ -1,7 +1,4 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
-package cmd
+package main
 
 import (
 	"bytes"
@@ -12,45 +9,47 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/spf13/cobra"
 )
 
 // initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:     "init <contest>",
+var initCmd = &Command{
+	Usage:   "init <contest>",
 	Short:   "コンテストのディレクトリ構造を初期化します",
-	Args:    cobra.ExactArgs(1),
 	Aliases: []string{"i"},
-	Run: func(cmd *cobra.Command, args []string) {
-		runInit(args[0])
+	Run: func(cmd *Command, args []string) ExitCode {
+		if len(args) == 0 {
+			fmt.Fprintln(os.Stderr, "コンテスト名を指定してください")
+			return ExitError
+		}
+		return runInit(args[0])
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
+	cmd.AddCommand(initCmd)
 }
 
-func runInit(contest string) {
+func runInit(contest string) ExitCode {
 	problems, err := problemIDs(contest)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fail to get problem ids: %v\n", err)
-		os.Exit(1)
+		return ExitError
 	}
 
 	if err := os.Mkdir(contest, 0755); err != nil && !os.IsExist(err) {
 		fmt.Fprintf(os.Stderr, "Fail to create contest directory, %s : %v\n", contest, err)
-		os.Exit(1)
+		return ExitError
 	}
 
 	for _, p := range problems {
 		path := filepath.Join(contest, p)
 		if err := os.Mkdir(path, 0755); err != nil && !os.IsExist(err) {
 			fmt.Fprintf(os.Stderr, "Fail to create problem directory, %s : %v\n", p, err)
-			os.Exit(1)
+			return ExitError
 		}
 		fmt.Println("Created:", path)
 	}
+	return ExitOK
 }
 
 func problemIDs(contest string) ([]string, error) {

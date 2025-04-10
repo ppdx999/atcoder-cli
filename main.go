@@ -1,10 +1,9 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
-*/
 package main
 
-import "github.com/ppdx999/atcoder-cli/cmd"
+var cmd = &Command{
+	Usage: "atcoder-cli",
+	Short: "atcoderを便利に使う小さなコマンド群",
+}
 
 func main() {
 	cmd.Execute()

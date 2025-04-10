@@ -1,7 +1,4 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
-package cmd
+package main
 
 import (
 	"bytes"
@@ -12,41 +9,40 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/spf13/cobra"
 )
 
-var downloadCmd = &cobra.Command{
-	Use:     "download",
+var downloadCmd = &Command{
+	Usage:   "download",
 	Short:   "問題のサンプルケースをダウンロードします",
 	Aliases: []string{"d"},
-	Run: func(cmd *cobra.Command, args []string) {
-		runDownload()
+	Run: func(cmd *Command, args []string) ExitCode {
+		return runDownload()
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(downloadCmd)
+	cmd.AddCommand(downloadCmd)
 }
 
-func runDownload() {
+func runDownload() ExitCode {
 	config, err := getConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fail to get config: %v\n", err)
-		os.Exit(1)
+		return ExitError
 	}
 
 	samples, err := fetchSamples(config)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fail to get samples: %v\n", err)
-		os.Exit(1)
+		return ExitError
 	}
 
 	if err := writeSamples(samples); err != nil {
 		fmt.Fprintf(os.Stderr, "Fail to write samples: %v\n", err)
-		os.Exit(1)
+		return ExitError
 	}
+	return ExitOK
 }
 
 type config struct {
