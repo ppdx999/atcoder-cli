@@ -17,6 +17,8 @@ var initCmd = &Command{
 	Short:   "コンテストのディレクトリ構造を初期化します",
 	Aliases: []string{"i"},
 	Run: func(cmd *Command, args []string) ExitCode {
+		logger := cmd.Logger
+		logger.Debug("Execute init")
 		if len(args) == 0 {
 			fmt.Fprintln(os.Stderr, "コンテスト名を指定してください")
 			return ExitError

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"text/template"
@@ -16,13 +19,17 @@ const (
 )
 
 type Command struct {
-	Usage    string
-	Short    string
-	Long     string
-	Aliases  []string
-	Run      func(cmd *Command, args []string) ExitCode
-	parent   *Command
-	commands []*Command
+	Usage         string
+	Short         string
+	Long          string
+	Aliases       []string
+	Run           func(cmd *Command, args []string) ExitCode
+	Logger        *slog.Logger
+	parent        *Command
+	commands      []*Command
+	flags         *flag.FlagSet
+	isHelpMode    bool
+	isVerboseMode bool
 }
 
 func (c *Command) name() string {
@@ -100,10 +107,6 @@ func (c *Command) hasDescription() bool {
 	return c.Long != "" || c.Short != ""
 }
 
-func (c *Command) isHelp(args []string) bool {
-	return len(args) == 1 && (args[0] == "-h" || args[0] == "--help")
-}
-
 func (c *Command) usageLine() string {
 	if c.hasParent() {
 		return c.parent.usageLine() + " " + c.Usage
@@ -132,6 +135,11 @@ Aliases:
 
 Description:
   {{ .Description }}
+{{- end }}
+{{- if .HasFlags }}
+
+Flags:
+{{ .FlagUsage }}
 {{- end }}
 `
 
@@ -163,6 +171,8 @@ func (c *Command) usage(w io.Writer) ExitCode {
 		"AliasesLine":    c.nameAndAliases(),
 		"HasDescription": c.hasDescription(),
 		"Description":    c.description(),
+		"HasFlags":       c.Flags() != nil,
+		"FlagUsage":      c.flagUsage(),
 	})
 	if err != nil {
 		fmt.Fprintf(w, "Error rendering usage: %v\n", err)
@@ -170,9 +180,38 @@ func (c *Command) usage(w io.Writer) ExitCode {
 	return ExitError
 }
 
+func (c *Command) setupCommonFlags() {
+	c.Flags().BoolVar(&c.isHelpMode, "h", false, "ヘルプを表示します")
+	c.Flags().BoolVar(&c.isHelpMode, "help", false, "ヘルプを表示します")
+	c.Flags().BoolVar(&c.isVerboseMode, "v", false, "詳細なログを出力します")
+	c.Flags().BoolVar(&c.isVerboseMode, "verbose", false, "詳細なログを出力します")
+}
+
+func (c *Command) flagUsage() string {
+	var buf bytes.Buffer
+	flagSet := c.Flags()
+	flagSet.VisitAll(func(f *flag.Flag) {
+		fmt.Fprintf(&buf, "  -%-10s\t%s\n", f.Name, f.Usage)
+	})
+	return buf.String()
+}
+
+func (c *Command) setupLogger(logLevel slog.Level) {
+	if c.Logger == nil {
+		c.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
+	}
+}
+
 func (c *Command) AddCommand(cmd *Command) {
 	cmd.parent = c
 	c.commands = append(c.commands, cmd)
+}
+
+func (c *Command) Flags() *flag.FlagSet {
+	if c.flags == nil {
+		c.flags = flag.NewFlagSet(c.name(), flag.ContinueOnError)
+	}
+	return c.flags
 }
 
 func (c *Command) Execute(args []string) ExitCode {
@@ -183,9 +222,19 @@ func (c *Command) Execute(args []string) ExitCode {
 
 	cmd, args := c.traverse(args)
 
-	if !cmd.runnable() || cmd.isHelp(args) {
+	cmd.setupCommonFlags()
+	cmd.flags.Parse(args)
+	args = cmd.flags.Args()
+
+	if !cmd.runnable() || cmd.isHelpMode {
 		return cmd.usage(os.Stderr)
 	}
+
+	logLevel := slog.LevelInfo
+	if cmd.isVerboseMode {
+		logLevel = slog.LevelDebug
+	}
+	cmd.setupLogger(logLevel)
 
 	return cmd.Run(cmd, args)
 }
