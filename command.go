@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io"
-	"log/slog"
-	"os"
 	"strings"
 	"text/template"
 )
@@ -18,21 +15,22 @@ const (
 	ExitError ExitCode = 1
 )
 
-type Command struct {
+type BaseCommand struct {
 	Usage         string
 	Short         string
 	Long          string
 	Aliases       []string
-	Run           func(cmd *Command, args []string) ExitCode
-	Logger        *slog.Logger
-	parent        *Command
-	commands      []*Command
-	flags         *flag.FlagSet
+	RunBase       func(args []string) ExitCode
+	parent        *BaseCommand
+	children      []*BaseCommand
+	runnable      bool
 	isHelpMode    bool
 	isVerboseMode bool
+	_w            *Workspace
+	_flags        *flag.FlagSet
 }
 
-func (c *Command) name() string {
+func (c *BaseCommand) name() string {
 	name := c.Usage
 	i := strings.Index(name, " ")
 	if i >= 0 {
@@ -41,7 +39,7 @@ func (c *Command) name() string {
 	return name
 }
 
-func (c *Command) hasAlias(s string) bool {
+func (c *BaseCommand) hasAlias(s string) bool {
 	for _, a := range c.Aliases {
 		if a == s {
 			return true
@@ -50,8 +48,8 @@ func (c *Command) hasAlias(s string) bool {
 	return false
 }
 
-func (c *Command) findNext(next string) *Command {
-	for _, cmd := range c.commands {
+func (c *BaseCommand) findNext(next string) *BaseCommand {
+	for _, cmd := range c.children {
 		if cmd.name() == next || cmd.hasAlias(next) {
 			return cmd
 		}
@@ -59,7 +57,7 @@ func (c *Command) findNext(next string) *Command {
 	return nil
 }
 
-func (c *Command) traverse(args []string) (*Command, []string) {
+func (c *BaseCommand) traverse(args []string) (*BaseCommand, []string) {
 	if len(args) == 0 {
 		return c, args
 	}
@@ -72,30 +70,33 @@ func (c *Command) traverse(args []string) (*Command, []string) {
 	return cmd.traverse(args[1:])
 }
 
-func (c *Command) hasParent() bool {
+func (c *BaseCommand) hasParent() bool {
 	return c.parent != nil
 }
 
-func (c *Command) runnable() bool {
-	return c.Run != nil
+func (c *BaseCommand) root() *BaseCommand {
+	if c.hasParent() {
+		return c.parent.root()
+	}
+	return c
 }
 
-func (c *Command) hasSubCommands() bool {
-	return len(c.commands) > 0
+func (c *BaseCommand) hasSubCommands() bool {
+	return len(c.children) > 0
 }
 
-func (c *Command) commandPath() string {
+func (c *BaseCommand) commandPath() string {
 	if c.hasParent() {
 		return c.parent.commandPath() + " " + c.name()
 	}
 	return c.name()
 }
 
-func (c *Command) nameAndAliases() string {
+func (c *BaseCommand) nameAndAliases() string {
 	return strings.Join(append([]string{c.name()}, c.Aliases...), ", ")
 }
 
-func (c *Command) description() string {
+func (c *BaseCommand) description() string {
 	d := strings.TrimSpace(c.Long)
 	if d == "" {
 		d = c.Short
@@ -103,15 +104,24 @@ func (c *Command) description() string {
 	return d
 }
 
-func (c *Command) hasDescription() bool {
+func (c *BaseCommand) hasDescription() bool {
 	return c.Long != "" || c.Short != ""
 }
 
-func (c *Command) usageLine() string {
+func (c *BaseCommand) usageLine() string {
 	if c.hasParent() {
 		return c.parent.usageLine() + " " + c.Usage
 	}
 	return c.Usage
+}
+
+func (c *BaseCommand) flagUsage() string {
+	var buf bytes.Buffer
+	f := c.flags()
+	f.VisitAll(func(f *flag.Flag) {
+		fmt.Fprintf(&buf, "  -%-10s\t%s\n", f.Name, f.Usage)
+	})
+	return buf.String()
 }
 
 const usageTemplate = `Usage:
@@ -148,9 +158,9 @@ type cmdOverview struct {
 	Desc string
 }
 
-func (c *Command) subcommandOverview() []cmdOverview {
+func (c *BaseCommand) subcommandOverview() []cmdOverview {
 	var overview []cmdOverview
-	for _, cmd := range c.commands {
+	for _, cmd := range c.children {
 		overview = append(overview, cmdOverview{
 			Name: cmd.name(),
 			Desc: cmd.Short,
@@ -159,10 +169,11 @@ func (c *Command) subcommandOverview() []cmdOverview {
 	return overview
 }
 
-func (c *Command) usage(w io.Writer) ExitCode {
+func (c *BaseCommand) usage() ExitCode {
+	w := c.workspace()
 	tmpl := template.Must(template.New("usage").Parse(usageTemplate))
-	err := tmpl.Execute(w, map[string]any{
-		"Runnable":       c.runnable(),
+	err := tmpl.Execute(w.GetErr(), map[string]any{
+		"Runnable":       c.runnable,
 		"UsageLine":      c.usageLine(),
 		"HasSubCommands": c.hasSubCommands(),
 		"CommandPath":    c.commandPath(),
@@ -171,70 +182,166 @@ func (c *Command) usage(w io.Writer) ExitCode {
 		"AliasesLine":    c.nameAndAliases(),
 		"HasDescription": c.hasDescription(),
 		"Description":    c.description(),
-		"HasFlags":       c.Flags() != nil,
+		"HasFlags":       c.flags() != nil,
 		"FlagUsage":      c.flagUsage(),
 	})
 	if err != nil {
-		fmt.Fprintf(w, "Error rendering usage: %v\n", err)
+		w.Errorf("Error rendering usage: %v", err)
 	}
 	return ExitError
 }
 
-func (c *Command) setupCommonFlags() {
-	c.Flags().BoolVar(&c.isHelpMode, "h", false, "ヘルプを表示します")
-	c.Flags().BoolVar(&c.isHelpMode, "help", false, "ヘルプを表示します")
-	c.Flags().BoolVar(&c.isVerboseMode, "v", false, "詳細なログを出力します")
-	c.Flags().BoolVar(&c.isVerboseMode, "verbose", false, "詳細なログを出力します")
+func (c *BaseCommand) setupCommonFlags() {
+	f := c.flags()
+	f.BoolVar(&c.isHelpMode, "h", false, "ヘルプを表示します")
+	f.BoolVar(&c.isHelpMode, "help", false, "ヘルプを表示します")
+	f.BoolVar(&c.isVerboseMode, "v", false, "詳細なログを出力します")
+	f.BoolVar(&c.isVerboseMode, "verbose", false, "詳細なログを出力します")
 }
 
-func (c *Command) flagUsage() string {
-	var buf bytes.Buffer
-	flagSet := c.Flags()
-	flagSet.VisitAll(func(f *flag.Flag) {
-		fmt.Fprintf(&buf, "  -%-10s\t%s\n", f.Name, f.Usage)
-	})
-	return buf.String()
-}
-
-func (c *Command) setupLogger(logLevel slog.Level) {
-	if c.Logger == nil {
-		c.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
-	}
-}
-
-func (c *Command) AddCommand(cmd *Command) {
+func (c *BaseCommand) addBaseCommand(cmd *BaseCommand) {
 	cmd.parent = c
-	c.commands = append(c.commands, cmd)
+	c.children = append(c.children, cmd)
 }
 
-func (c *Command) Flags() *flag.FlagSet {
-	if c.flags == nil {
-		c.flags = flag.NewFlagSet(c.name(), flag.ContinueOnError)
+func (c *BaseCommand) flags() *flag.FlagSet {
+	if c._flags == nil {
+		c._flags = flag.NewFlagSet(c.name(), flag.ContinueOnError)
 	}
-	return c.flags
+	return c._flags
 }
 
-func (c *Command) Execute(args []string) ExitCode {
+func (c *BaseCommand) workspace() *Workspace {
+	if c._w != nil {
+		return c._w
+	}
+	w := c.root().workspace()
+	if w == nil {
+		panic("workspace is nil")
+	}
+	c._w = w
+	return w
+}
+
+func (c *BaseCommand) setWorkspace(w *Workspace) {
+	c._w = w
+}
+
+func (c *BaseCommand) execute(args []string) ExitCode {
 	if c.hasParent() {
-		fmt.Fprintf(os.Stderr, "Execute non root command")
+		c.workspace().Error("Execute Non Root command")
 		return ExitError
 	}
 
 	cmd, args := c.traverse(args)
 
-	cmd.setupCommonFlags()
-	cmd.flags.Parse(args)
-	args = cmd.flags.Args()
+	return cmd.RunBase(args)
+}
 
-	if !cmd.runnable() || cmd.isHelpMode {
-		return cmd.usage(os.Stderr)
+type CmdRunner[T any] interface {
+	Setup(cmd *Command[T]) error
+	Run(opt T) ExitCode
+}
+
+type Command[T any] struct {
+	base     *BaseCommand
+	Opt      T
+	ParseOpt func(args []string) (T, error)
+	Runner   CmdRunner[T]
+}
+
+func (c *Command[T]) Workspace() *Workspace {
+	return c.base.workspace()
+}
+
+func (c *Command[T]) SetWorkspace(w *Workspace) {
+	c.base.setWorkspace(w)
+}
+
+func (c *Command[T]) run(args []string) ExitCode {
+	w := c.Workspace()
+	base := c.base
+	base.setupCommonFlags()
+
+	flag := base.flags()
+
+	if err := flag.Parse(args); err != nil {
+		w.Error(err.Error())
+		return ExitError
 	}
 
-	logLevel := slog.LevelInfo
-	if cmd.isVerboseMode {
-		logLevel = slog.LevelDebug
+	if !base.runnable || base.isHelpMode {
+		return base.usage()
 	}
-	cmd.setupLogger(logLevel)
 
-	return cmd.Run(cmd, args)
+	if base.isVerboseMode {
+		w.SetLogLevel(LogLevelDebug)
+	} else {
+		w.SetLogLevel(LogLevelInfo)
+	}
+
+	if c.ParseOpt != nil {
+		opt, err := c.ParseOpt(flag.Args())
+		if err != nil {
+			w.Error(err.Error())
+			return ExitError
+		}
+		c.Opt = opt
+	}
+
+	if c.Runner == nil {
+		w.Error("Runner is nil")
+	}
+	if err := c.Runner.Setup(c); err != nil {
+		w.Error(err.Error())
+		return ExitError
+	}
+
+	return c.Runner.Run(c.Opt)
+}
+
+func (c *Command[T]) Base() *BaseCommand {
+	return c.base
+}
+
+type CommandAddArg interface {
+	Base() *BaseCommand
+}
+
+func (c *Command[T]) Add(cmd CommandAddArg) {
+	c.base.addBaseCommand(cmd.Base())
+}
+
+func (c *Command[T]) Execute(args []string) ExitCode {
+	return c.base.execute(args)
+}
+
+type NewCommandOpt[T any] struct {
+	Usage    string
+	Short    string
+	Long     string
+	Aliases  []string
+	ParseOpt func(args []string) (T, error)
+	Runner   CmdRunner[T]
+}
+
+func NewCommand[T any](opt *NewCommandOpt[T]) *Command[T] {
+	base := &BaseCommand{
+		Usage:    opt.Usage,
+		Short:    opt.Short,
+		Long:     opt.Long,
+		Aliases:  opt.Aliases,
+		runnable: opt.Runner != nil,
+		RunBase:  nil,
+	}
+
+	cmd := &Command[T]{
+		base:     base,
+		ParseOpt: opt.ParseOpt,
+		Runner:   opt.Runner,
+	}
+
+	base.RunBase = cmd.run
+
+	return cmd
 }
