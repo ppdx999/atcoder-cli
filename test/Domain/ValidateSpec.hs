@@ -2,6 +2,7 @@
 
 module Domain.ValidateSpec (spec) where
 
+import Data.Either (isLeft)
 import Domain.Types
 import Domain.Validate
 import Test.Hspec
@@ -41,8 +42,3 @@ spec = do
 
     it "rejects empty file path" $
       mkSourceFile "" `shouldBe` Left (SourceFileNotFound "")
-
--- ヘルパー
-isLeft :: Either a b -> Bool
-isLeft (Left _) = True
-isLeft _ = False
