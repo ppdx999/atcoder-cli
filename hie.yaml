@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:atcli"
+
+    - path: "test"
+      component: "atcli:test:atcli-test"
+
+    - path: "app/Main.hs"
+      component: "atcli:exe:atcli"
