@@ -1,0 +1,55 @@
+name: atcli
+version: 0.1.0.0
+github: "ppdx999/atcli"
+license: BSD3
+author: "Author name here"
+maintainer: "example@example.com"
+copyright: "2025 Author"
+category: Web
+extra-source-files:
+  - README.md
+  - CHANGELOG.md
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-export-lists
+  - -Wmissing-home-modules
+  - -Wpartial-fields
+  - -Wredundant-constraints
+
+dependencies:
+  - base >= 4.7 && < 5
+  - bytestring
+  - exceptions
+  - filepath
+  - mtl
+  - text
+  - time
+  - transformers
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Domain.Types
+    - Domain.Validate
+    - Domain.Ports
+    - Domain.Usecase.Init
+
+executables:
+  atcli:
+    source-dirs: app
+    main: Main.hs
+    dependencies:
+      - atcli
+
+tests:
+  atcli-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - atcli
+      - hspec >= 2.7 && < 3

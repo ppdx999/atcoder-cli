@@ -1,78 +1,87 @@
-cabal-version:       2.2
+cabal-version: 1.12
 
-name:                atcli
-version:             0.1.0.0
--- synopsis:
--- description:
-homepage:            https://github.com/ppdx999/atcli#readme
-license:             BSD-3-Clause
-license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2025 Author name here
-category:            Web
-build-type:          Simple
-extra-source-files:  README.md
-                     CHANGELOG.md
+-- This file has been generated from package.yaml by hpack version 0.37.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           atcli
+version:        0.1.0.0
+category:       Web
+homepage:       https://github.com/ppdx999/atcli#readme
+bug-reports:    https://github.com/ppdx999/atcli/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2025 Author
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/ppdx999/atcli
+
 library
-  hs-source-dirs:      src
-  exposed-modules:     Domain.Types
-                       , Domain.Validate
-                       , Domain.Ports
-                       , Domain.Usecase.Init
-  build-depends:       base >= 4.7 && < 5
-                       , bytestring
-                       , exceptions
-                       , filepath
-                       , mtl
-                       , text
-                       , time
-                       , transformers
-  default-language:    Haskell2010
-  ghc-options:         -Wall
-                       -Wcompat
-                       -Widentities
-                       -Wincomplete-record-updates
-                       -Wincomplete-uni-patterns
-                       -Wmissing-export-lists
-                       -Wmissing-home-modules
-                       -Wpartial-fields
-                       -Wredundant-constraints
-
-test-suite atcli-test
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             Spec.hs
-  default-language:    Haskell2010
-  build-depends:       base >= 4.7 && < 5
-                       , text
-                       , atcli
-                       , hspec >= 2.7 && < 3
-  other-modules:       Domain.ValidateSpec
-  ghc-options:         -Wall
-                       -Wcompat
-                       -Widentities
-                       -Wincomplete-record-updates
-                       -Wincomplete-uni-patterns
-                       -Wmissing-export-lists
-                       -Wmissing-home-modules
-                       -Wpartial-fields
-                       -Wredundant-constraints
-                       -threaded -rtsopts -with-rtsopts=-N
+  exposed-modules:
+      Domain.Types
+      Domain.Validate
+      Domain.Ports
+      Domain.Usecase.Init
+  other-modules:
+      Paths_atcli
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , exceptions
+    , filepath
+    , mtl
+    , text
+    , time
+    , transformers
+  default-language: Haskell2010
 
 executable atcli
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  default-language:    Haskell2010
-  build-depends:       base >= 4.7 && < 5
-                       , text
-                       , atcli
-  ghc-options:         -Wall
-                       -Wcompat
-                       -Widentities
-                       -Wincomplete-record-updates
-                       -Wincomplete-uni-patterns
-                       -Wmissing-export-lists
-                       -Wmissing-home-modules
-                       -Wpartial-fields
-                       -Wredundant-constraints
+  main-is: Main.hs
+  other-modules:
+      Paths_atcli
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      atcli
+    , base >=4.7 && <5
+    , bytestring
+    , exceptions
+    , filepath
+    , mtl
+    , text
+    , time
+    , transformers
+  default-language: Haskell2010
+
+test-suite atcli-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Domain.ValidateSpec
+      Paths_atcli
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      atcli
+    , base >=4.7 && <5
+    , bytestring
+    , exceptions
+    , filepath
+    , hspec >=2.7 && <3
+    , mtl
+    , text
+    , time
+    , transformers
+  default-language: Haskell2010
