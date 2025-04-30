@@ -14,7 +14,7 @@ import System.FilePath ((</>))
 import Usecase.Ports
 
 initContest ::
-  ( HasFetchProblemList m,
+  ( HasFetchProblemIds m,
     HasCreateDirectory m,
     HasLogger m
   ) =>
@@ -28,12 +28,13 @@ initContest contestId@(ContestId contestName) = do
   ExceptT $ createDirectory contestDir
 
   lift $ logInfo "Fetching problem list..."
-  problemIds <- ExceptT $ fetchProblemList contestId
+  problemIds <- ExceptT $ fetchProblemIds contestId
 
   lift $ logInfo $ "Found " <> T.pack (show $ length problemIds) <> " problems."
 
   let createProblemDir (ProblemId problemName) = do
         let problemDir = contestDir </> T.unpack problemName
         lift $ logInfo $ "Creating directory: " <> T.pack problemDir
-        ExceptT $ createDirectory problemDir -- 失敗したら ExceptT が Left を伝播
+        ExceptT $ createDirectory problemDir
 
+  traverse_ createProblemDir problemIds
