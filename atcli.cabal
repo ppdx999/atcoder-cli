@@ -29,6 +29,7 @@ library
       Domain.Validate
       Usecase.Ports
       Usecase.Init
+      Di
   other-modules:
       Infra.Atcoder
       Infra.FileSystem
