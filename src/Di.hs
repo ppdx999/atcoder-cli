@@ -7,7 +7,7 @@
 module Di (runAppM) where
 
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
-import Domain.Types (DomainError)
+import Domain (DomainError)
 import Infra.Atcoder (fetchProblemIdsIO)
 import Infra.FileSystem (createDirectoryIO)
 import Infra.Logger (logErrorIO, logInfoIO)

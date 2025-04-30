@@ -7,7 +7,7 @@ import Control.Monad.Trans.Except (ExceptT, throwE)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Di (runAppM)
-import Domain.Types (DomainError (InfraError), toContestId)
+import Domain (DomainError (InfraError), toContestId)
 import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (stderr)

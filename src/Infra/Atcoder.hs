@@ -8,7 +8,7 @@ where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Text.IO as TIO
-import Domain.Types
+import Domain
 
 -- | Dummy IO implementation for fetchProblemList
 fetchProblemIdsIO :: (MonadIO m) => ContestId -> m (Either DomainError [ProblemId])

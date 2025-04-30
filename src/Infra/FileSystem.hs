@@ -9,7 +9,7 @@ where
 import Control.Monad.Catch (try)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Text as T
-import Domain.Types (DomainError (..)) -- InfraError を使う
+import Domain (DomainError (..)) -- InfraError を使う
 import GHC.IO.Exception (IOException) -- 例外型
 import qualified System.Directory as Dir
 

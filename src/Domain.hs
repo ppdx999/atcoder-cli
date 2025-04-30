@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Domain.Types
+module Domain
   ( ContestId,
     toContestId,
     deContestId,

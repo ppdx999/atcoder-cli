@@ -7,7 +7,7 @@ where
 
 import Control.Monad.Catch (MonadThrow)
 import Data.Text
-import Domain.Types
+import Domain
 
 class (Monad m) => HasFetchProblemIds m where
   fetchProblemIds :: ContestId -> m (Either DomainError [ProblemId])

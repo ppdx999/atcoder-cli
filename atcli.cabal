@@ -25,7 +25,7 @@ source-repository head
 
 library
   exposed-modules:
-      Domain.Types
+      Domain
       Usecase.Ports
       Usecase.Init
       Di
@@ -73,7 +73,7 @@ test-suite atcli-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Domain.ValidateSpec
+      DomainSpec
       Paths_atcli
   hs-source-dirs:
       test

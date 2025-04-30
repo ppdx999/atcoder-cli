@@ -9,7 +9,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (ExceptT))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
-import Domain.Types
+import Domain
 import System.FilePath ((</>))
 import Usecase.Ports
 
