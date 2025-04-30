@@ -36,7 +36,6 @@ library:
   source-dirs: src
   exposed-modules:
     - Domain.Types
-    - Domain.Validate
     - Usecase.Ports
     - Usecase.Init
     - Di

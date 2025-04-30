@@ -20,7 +20,8 @@ initContest ::
   ) =>
   ContestId ->
   ExceptT DomainError m ()
-initContest contestId@(ContestId contestName) = do
+initContest contestId = do
+  let contestName = deContestId contestId
   lift $ logInfo $ "Initializing contest: " <> contestName
 
   let contestDir = T.unpack contestName
@@ -32,8 +33,8 @@ initContest contestId@(ContestId contestName) = do
 
   lift $ logInfo $ "Found " <> T.pack (show $ length problemIds) <> " problems."
 
-  let createProblemDir (ProblemId problemName) = do
-        let problemDir = contestDir </> T.unpack problemName
+  let createProblemDir problemId = do
+        let problemDir = contestDir </> T.unpack (deProblemId problemId)
         lift $ logInfo $ "Creating directory: " <> T.pack problemDir
         ExceptT $ createDirectory problemDir
 
