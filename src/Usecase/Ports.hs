@@ -1,7 +1,7 @@
-module Domain.Ports
+module Usecase.Ports
   ( HasFetchProblemList (..),
     HasCreateDirectory (..),
-    HasLogInfo (..),
+    HasLogger (..),
   )
 where
 
@@ -15,5 +15,6 @@ class (Monad m) => HasFetchProblemList m where
 class (Monad m, MonadThrow m) => HasCreateDirectory m where
   createDirectory :: FilePath -> m (Either DomainError ())
 
-class (Monad m) => HasLogInfo m where
+class (Monad m) => HasLogger m where
   logInfo :: Text -> m ()
+  logError :: Text -> m ()

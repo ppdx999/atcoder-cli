@@ -36,8 +36,8 @@ library:
   exposed-modules:
     - Domain.Types
     - Domain.Validate
-    - Domain.Ports
-    - Domain.Usecase.Init
+    - Usecase.Ports
+    - Usecase.Init
 
 executables:
   atcli:

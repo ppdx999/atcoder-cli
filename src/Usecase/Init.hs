@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Domain.Usecase.Init
+module Usecase.Init
   ( initContest,
   )
 where
@@ -9,14 +9,14 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (ExceptT))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
-import Domain.Ports
 import Domain.Types
 import System.FilePath ((</>))
+import Usecase.Ports
 
 initContest ::
   ( HasFetchProblemList m,
     HasCreateDirectory m,
-    HasLogInfo m
+    HasLogger m
   ) =>
   ContestId ->
   ExceptT DomainError m ()
