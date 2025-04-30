@@ -1,6 +1,7 @@
 module Domain.Types
   ( ContestId (..),
     ProblemId (..),
+    Task (..),
     LanguageId (..),
     SourceFile (..),
     SessionCookie (..),
@@ -22,6 +23,13 @@ newtype ContestId = ContestId Text
 
 -- | Problem ID (e.g., "a", "b", "c")
 newtype ProblemId = ProblemId Text
+  deriving (Eq, Ord, Show)
+
+-- | Represents a specific problem within a contest
+data Task = Task
+  { taskContestId :: ContestId,
+    taskProblemId :: ProblemId
+  }
   deriving (Eq, Ord, Show)
 
 -- | Language ID (e.g., 4001 for C++, 4011 for Python)
@@ -76,5 +84,6 @@ data DomainError
   | SourceFileNotFound FilePath
   | CookieParseFailed Text
   | DuplicateTestCase Text
-  | UnexpectedState Text -- fallback catch-all
+  | UnexpectedState Text
+  | InfraError Text
   deriving (Eq, Show)
