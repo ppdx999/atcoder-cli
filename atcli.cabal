@@ -30,6 +30,9 @@ library
       Usecase.Ports
       Usecase.Init
   other-modules:
+      Infra.Atcoder
+      Infra.FileSystem
+      Infra.Logger
       Paths_atcli
   hs-source-dirs:
       src
@@ -37,6 +40,7 @@ library
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , directory
     , exceptions
     , filepath
     , mtl
@@ -56,6 +60,7 @@ executable atcli
       atcli
     , base >=4.7 && <5
     , bytestring
+    , directory
     , exceptions
     , filepath
     , mtl
@@ -77,6 +82,7 @@ test-suite atcli-test
       atcli
     , base >=4.7 && <5
     , bytestring
+    , directory
     , exceptions
     , filepath
     , hspec >=2.7 && <3

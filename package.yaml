@@ -30,6 +30,7 @@ dependencies:
   - text
   - time
   - transformers
+  - directory
 
 library:
   source-dirs: src
