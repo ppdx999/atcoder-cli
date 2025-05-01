@@ -14,8 +14,8 @@ import System.FilePath ((</>))
 import Usecase.Ports
 
 initContest ::
-  ( HasFetchProblemIds m,
-    HasCreateDirectory m,
+  ( HasAtcoder m,
+    HasFileSystem m,
     HasLogger m
   ) =>
   ContestId ->

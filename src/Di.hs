@@ -17,10 +17,10 @@ instance HasLogger IO where
   logInfo = logInfoIO
   logError = logErrorIO
 
-instance HasCreateDirectory IO where
+instance HasFileSystem IO where
   createDirectory = createDirectoryIO
 
-instance HasFetchProblemIds IO where
+instance HasAtcoder IO where
   fetchProblemIds = fetchProblemIdsIO
 
 runAppM :: ExceptT DomainError IO a -> IO (Either DomainError a)

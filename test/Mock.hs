@@ -61,7 +61,7 @@ instance HasLogger MockApp where
   -- logError も必要なら実装
   logError msg = modify $ \s -> s {msLogs = msLogs s ++ ["[ERROR] " <> msg]}
 
-instance HasCreateDirectory MockApp where
+instance HasFileSystem MockApp where
   createDirectory path = do
     resultFunc <- gets msCreateDirResult
     case resultFunc path of
@@ -70,5 +70,5 @@ instance HasCreateDirectory MockApp where
         pure $ Right ()
       Left err -> pure $ Left err
 
-instance HasFetchProblemIds MockApp where
+instance HasAtcoder MockApp where
   fetchProblemIds _contestId = gets msProblemIdsResult
