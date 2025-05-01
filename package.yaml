@@ -37,10 +37,11 @@ library:
   source-dirs: src
   exposed-modules:
     - Types
+    - Di
     - Usecase.Deps
     - Usecase.Init
     - Usecase.Download
-    - Di
+    - Provider.Atcoder
 
 executables:
   atcli:

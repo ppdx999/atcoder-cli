@@ -26,12 +26,12 @@ source-repository head
 library
   exposed-modules:
       Types
+      Di
       Usecase.Deps
       Usecase.Init
       Usecase.Download
-      Di
-  other-modules:
       Provider.Atcoder
+  other-modules:
       Provider.FileSystem
       Provider.Logger
       Usecase.Utils
@@ -78,6 +78,7 @@ test-suite atcli-test
   main-is: Spec.hs
   other-modules:
       Mock
+      Provider.AtcoderSpec
       TypesSpec
       Usecase.DownloadSpec
       Usecase.InitSpec
