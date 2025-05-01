@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Usecase.Deps
+module Interface
   ( HasAtcoder (..),
     HasFileSystem (..),
     HasLogger (..),

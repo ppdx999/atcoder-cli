@@ -9,9 +9,9 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (ExceptT))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
+import Interface
 import System.FilePath ((</>))
 import Types
-import Usecase.Deps
 
 initContest ::
   ( HasAtcoder m,

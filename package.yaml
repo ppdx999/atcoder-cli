@@ -32,13 +32,15 @@ dependencies:
   - time
   - transformers
   - directory
+  - req
+  - modern-uri
 
 library:
   source-dirs: src
   exposed-modules:
     - Types
     - Di
-    - Usecase.Deps
+    - Interface
     - Usecase.Init
     - Usecase.Download
     - Provider.Atcoder

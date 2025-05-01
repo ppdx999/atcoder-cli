@@ -21,8 +21,9 @@ import qualified Data.Map as Map -- Import Map qualified
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text (Text)
-import Types -- Types.hs から型をインポート
-import Usecase.Deps -- Capability をインポート
+-- Types.hs から型をインポート
+import Interface -- Capability をインポート
+import Types
 
 -- | モック実行時の状態
 data MockState = MockState

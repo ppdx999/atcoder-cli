@@ -8,11 +8,11 @@
 module Di (runAppM) where
 
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
+import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO)
 import Provider.FileSystem (createDirectoryIO, getCurrentDirectoryIO, saveFileIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Types (AppError)
-import Usecase.Deps
 
 instance HasLogger IO where
   logInfo = logInfoIO

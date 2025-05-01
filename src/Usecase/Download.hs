@@ -10,9 +10,9 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (..))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
+import Interface
 import System.FilePath ((</>))
 import Types
-import Usecase.Deps
 import Usecase.Utils (parseTaskFromPath)
 
 download ::

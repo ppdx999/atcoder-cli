@@ -27,7 +27,7 @@ library
   exposed-modules:
       Types
       Di
-      Usecase.Deps
+      Interface
       Usecase.Init
       Usecase.Download
       Provider.Atcoder
@@ -46,7 +46,9 @@ library
     , directory
     , exceptions
     , filepath
+    , modern-uri
     , mtl
+    , req
     , text
     , time
     , transformers
@@ -67,7 +69,9 @@ executable atcli
     , directory
     , exceptions
     , filepath
+    , modern-uri
     , mtl
+    , req
     , text
     , time
     , transformers
@@ -95,7 +99,9 @@ test-suite atcli-test
     , exceptions
     , filepath
     , hspec >=2.7 && <3
+    , modern-uri
     , mtl
+    , req
     , text
     , time
     , transformers
