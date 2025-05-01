@@ -8,7 +8,7 @@
 module Di (runAppM) where
 
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
-import Provider.Atcoder (fetchProblemIdsIO, fetchTestCasesIO)
+import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO)
 import Provider.FileSystem (createDirectoryIO, getCurrentDirectoryIO, saveFileIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Types (AppError)
@@ -25,8 +25,8 @@ instance HasFileSystem IO where
   saveFile = saveFileIO
 
 instance HasAtcoder IO where
-  fetchProblemIds = fetchProblemIdsIO
-  fetchTestCases = fetchTestCasesIO
+  fetchProblemIds = fetchProblemIdsIO AtCoderEnv
+  fetchTestCases = fetchTestCasesIO AtCoderEnv
 
 runAppM :: ExceptT AppError IO a -> IO (Either AppError a)
 runAppM = runExceptT
