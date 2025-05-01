@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Usecase.Ports
+module Usecase.Deps
   ( HasAtcoder (..),
     HasFileSystem (..),
     HasLogger (..),
@@ -8,17 +8,21 @@ module Usecase.Ports
 where
 
 import Control.Monad.Catch (MonadThrow)
+-- import Data.ByteString (ByteString)
 import Data.Text (Text)
-import Domain
+import Types
 
 class (Monad m) => HasLogger m where
   logInfo :: Text -> m ()
   logError :: Text -> m ()
 
 class (Monad m, MonadThrow m) => HasFileSystem m where
-  createDirectory :: FilePath -> m (Either DomainError ())
+  createDirectory :: FilePath -> m (Either AppError ())
 
+-- getCurrentDirectory :: m FilePath
+-- saveFile :: FilePath -> ByteString -> m (Either AppError ())
 
 class (Monad m) => HasAtcoder m where
-  fetchProblemIds :: ContestId -> m (Either DomainError [ProblemId])
+  fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
 
+-- fetchTestCases :: Task -> m (Either AppError [TestCase])

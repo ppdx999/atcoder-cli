@@ -9,9 +9,9 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (ExceptT))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
-import Domain
 import System.FilePath ((</>))
-import Usecase.Ports
+import Types
+import Usecase.Deps
 
 initContest ::
   ( HasAtcoder m,
@@ -19,7 +19,7 @@ initContest ::
     HasLogger m
   ) =>
   ContestId ->
-  ExceptT DomainError m ()
+  ExceptT AppError m ()
 initContest contestId = do
   let contestName = deContestId contestId
   lift $ logInfo $ "Initializing contest: " <> contestName

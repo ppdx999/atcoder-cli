@@ -7,10 +7,10 @@ import Control.Monad.Trans.Except (ExceptT, throwE)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Di (runAppM)
-import Domain (DomainError (InfraError), toContestId)
 import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (stderr)
+import Types (AppError (ProviderError), toContestId)
 import Usecase.Init (initContest)
 
 main :: IO ()
@@ -20,14 +20,14 @@ main = do
 textize :: [String] -> [T.Text]
 textize = map T.pack
 
-runMain :: [T.Text] -> ExceptT DomainError IO ()
+runMain :: [T.Text] -> ExceptT AppError IO ()
 runMain ["init", contestIdStr] = do
   contestId <- liftEither $ toContestId contestIdStr
   initContest contestId
 runMain _ =
-  throwE $ InfraError "Invalid arguments: Usage: atcli <contest-id>"
+  throwE $ ProviderError "Invalid arguments: Usage: atcli <contest-id>"
 
-showErr :: Either DomainError () -> IO (Either () ())
+showErr :: Either AppError () -> IO (Either () ())
 showErr result = do
   case result of
     Left err -> do

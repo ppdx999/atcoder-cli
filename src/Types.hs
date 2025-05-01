@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Domain
+module Types
   ( ContestId,
     toContestId,
     deContestId,
@@ -17,7 +17,7 @@ module Domain
     SubmissionId (..),
     SubmissionState (..),
     Submission (..),
-    DomainError (..),
+    AppError (..),
   )
 where
 
@@ -84,8 +84,8 @@ data Submission = Submission
   }
   deriving (Eq, Show)
 
--- | Domain-layer errors
-data DomainError
+-- | Types-layer errors
+data AppError
   = InvalidContestId T.Text
   | InvalidProblemId T.Text
   | InvalidLanguageId Int
@@ -93,10 +93,10 @@ data DomainError
   | CookieParseFailed T.Text
   | DuplicateTestCase T.Text
   | UnexpectedState T.Text
-  | InfraError T.Text
+  | ProviderError T.Text
   deriving (Eq, Show)
 
-toContestId :: T.Text -> Either DomainError ContestId
+toContestId :: T.Text -> Either AppError ContestId
 toContestId t
   | T.null t = Left (InvalidContestId "Contest ID cannot be empty.")
   | T.all validChar t = Right (ContestId t)
@@ -110,7 +110,7 @@ toContestId t
 deContestId :: ContestId -> T.Text
 deContestId (ContestId t) = t
 
-toProblemId :: T.Text -> Either DomainError ProblemId
+toProblemId :: T.Text -> Either AppError ProblemId
 toProblemId t
   | T.null t = Left (InvalidProblemId "Problem ID cannot be empty.")
   | T.all validChar t = Right (ProblemId t)
@@ -124,12 +124,12 @@ toProblemId t
 deProblemId :: ProblemId -> T.Text
 deProblemId (ProblemId p) = p
 
-toLanguageId :: Int -> Either DomainError LanguageId
+toLanguageId :: Int -> Either AppError LanguageId
 toLanguageId n
   | n > 0 = Right (LanguageId n)
   | otherwise = Left (InvalidLanguageId n)
 
-toSourceFile :: FilePath -> Either DomainError SourceFile
+toSourceFile :: FilePath -> Either AppError SourceFile
 toSourceFile path
   | null path = Left (SourceFileNotFound path)
   | otherwise = Right (SourceFile path)

@@ -7,11 +7,11 @@
 module Di (runAppM) where
 
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
-import Domain (DomainError)
-import Infra.Atcoder (fetchProblemIdsIO)
-import Infra.FileSystem (createDirectoryIO)
-import Infra.Logger (logErrorIO, logInfoIO)
-import Usecase.Ports
+import Provider.Atcoder (fetchProblemIdsIO)
+import Provider.FileSystem (createDirectoryIO)
+import Provider.Logger (logErrorIO, logInfoIO)
+import Types (AppError)
+import Usecase.Deps
 
 instance HasLogger IO where
   logInfo = logInfoIO
@@ -23,5 +23,5 @@ instance HasFileSystem IO where
 instance HasAtcoder IO where
   fetchProblemIds = fetchProblemIdsIO
 
-runAppM :: ExceptT DomainError IO a -> IO (Either DomainError a)
+runAppM :: ExceptT AppError IO a -> IO (Either AppError a)
 runAppM = runExceptT

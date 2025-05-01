@@ -36,8 +36,8 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
-    - Domain
-    - Usecase.Ports
+    - Types
+    - Usecase.Deps
     - Usecase.Init
     - Di
 

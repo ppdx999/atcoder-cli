@@ -1,7 +1,7 @@
--- src/Infrastructure/Logger.hs
+-- src/Providerstructure/Logger.hs
 {-# LANGUAGE OverloadedStrings #-}
 
-module Infra.Logger
+module Provider.Logger
   ( logInfoIO,
     logErrorIO,
   )

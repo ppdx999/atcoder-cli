@@ -18,15 +18,15 @@ import Control.Monad.State.Strict (MonadState, StateT (..), gets, modify, runSta
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text (Text)
-import Domain -- Domain.hs から型をインポート
-import Usecase.Ports -- Capability をインポート
+import Types -- Types.hs から型をインポート
+import Usecase.Deps -- Capability をインポート
 
 -- | モック実行時の状態
 data MockState = MockState
   { msLogs :: [Text], -- 記録されたログメッセージ (順序保持)
     msCreatedDirs :: Set FilePath, -- 作成されたディレクトリの集合
-    msProblemIdsResult :: Either DomainError [ProblemId], -- fetchProblemIds の結果を制御
-    msCreateDirResult :: FilePath -> Either DomainError () -- createDirectory の結果を制御
+    msProblemIdsResult :: Either AppError [ProblemId], -- fetchProblemIds の結果を制御
+    msCreateDirResult :: FilePath -> Either AppError () -- createDirectory の結果を制御
   }
 
 -- | モック状態の初期値

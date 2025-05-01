@@ -5,10 +5,10 @@ module Usecase.InitSpec (spec) where
 
 import Control.Monad.Trans.Except (runExceptT)
 import qualified Data.Set as Set
-import Domain
 import Mock
 import System.FilePath ((</>))
 import Test.Hspec
+import Types
 import Usecase.Init (initContest)
 
 spec :: Spec
@@ -44,7 +44,7 @@ spec = describe "Usecase.Init.initContest" $ do
     msCreatedDirs finalState `shouldBe` Set.fromList [contestDir, problemDirA, problemDirB]
 
   it "異常系: 問題リストの取得に失敗した場合、エラーを返し処理を中断する" $ do
-    let fetchError = InfraError "Network timeout"
+    let fetchError = ProviderError "Network timeout"
     let initialState = initialMockState {msProblemIdsResult = Left fetchError}
     (result, finalState) <- execMockApp (runExceptT (initContest contestId)) initialState
 
@@ -62,7 +62,7 @@ spec = describe "Usecase.Init.initContest" $ do
     msCreatedDirs finalState `shouldBe` Set.fromList [contestDir]
 
   it "異常系: コンテストディレクトリの作成に失敗した場合、エラーを返し処理を中断する" $ do
-    let createError = InfraError "Permission denied"
+    let createError = ProviderError "Permission denied"
     let resultFunc path = if path == contestDir then Left createError else Right ()
     let initialState = initialMockState {msCreateDirResult = resultFunc}
     (result, finalState) <- execMockApp (runExceptT (initContest contestId)) initialState
@@ -80,7 +80,7 @@ spec = describe "Usecase.Init.initContest" $ do
     msCreatedDirs finalState `shouldBe` Set.empty
 
   it "異常系: 問題ディレクトリの作成に失敗した場合、エラーを返し処理を中断する" $ do
-    let createError = InfraError "Disk full"
+    let createError = ProviderError "Disk full"
     -- problemDirB の作成時のみエラーを返すように設定
     let resultFunc path = if path == problemDirB then Left createError else Right ()
     let initialState = initialMockState {msProblemIdsResult = Right problems, msCreateDirResult = resultFunc}

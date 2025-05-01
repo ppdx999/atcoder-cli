@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module DomainSpec (spec) where
+module TypesSpec (spec) where
 
 import Data.Either (isLeft, isRight) -- isRight を追加
-import Domain
 import Test.Hspec
+import Types
 
 spec :: Spec
 spec = do
@@ -16,7 +16,7 @@ spec = do
       fmap deContestId result `shouldBe` Right "abc100"
 
     it "rejects empty contest id" $
-      -- Left の値は直接比較できる (DomainError のコンストラクタはエクスポートされているため)
+      -- Left の値は直接比較できる (AppError のコンストラクタはエクスポートされているため)
       toContestId "" `shouldBe` Left (InvalidContestId "Contest ID cannot be empty.")
 
     it "rejects invalid characters in contest id" $
@@ -41,7 +41,7 @@ spec = do
     -- LanguageId から Int を取り出す関数があればそれを使う
     -- なければ fmap (\(LanguageId i) -> i) result `shouldBe` Right 4001 のようにパターンマッチ
     -- (ただし、LanguageId コンストラクタは使えないので、この方法は不可)
-    -- => LanguageId 用の deconstructor 関数 (例: deLanguageId) を Domain.hs に追加するのが良い
+    -- => LanguageId 用の deconstructor 関数 (例: deLanguageId) を Types.hs に追加するのが良い
 
     it "rejects non-positive language id" $
       toLanguageId 0 `shouldBe` Left (InvalidLanguageId 0)
@@ -50,7 +50,7 @@ spec = do
     it "accepts non-empty file path" $ do
       let result = toSourceFile "Main.hs"
       result `shouldSatisfy` isRight
-    -- SourceFile 用の deconstructor 関数 (例: deSourceFile) を Domain.hs に追加するのが良い
+    -- SourceFile 用の deconstructor 関数 (例: deSourceFile) を Types.hs に追加するのが良い
     -- fmap (\(SourceFile fp) -> fp) result `shouldBe` Right "Main.hs"
 
     it "rejects empty file path" $

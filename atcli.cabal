@@ -25,14 +25,14 @@ source-repository head
 
 library
   exposed-modules:
-      Domain
-      Usecase.Ports
+      Types
+      Usecase.Deps
       Usecase.Init
       Di
   other-modules:
-      Infra.Atcoder
-      Infra.FileSystem
-      Infra.Logger
+      Provider.Atcoder
+      Provider.FileSystem
+      Provider.Logger
       Paths_atcli
   hs-source-dirs:
       src
@@ -75,8 +75,8 @@ test-suite atcli-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      DomainSpec
       Mock
+      TypesSpec
       Usecase.InitSpec
       Paths_atcli
   hs-source-dirs:
