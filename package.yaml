@@ -39,6 +39,7 @@ library:
     - Types
     - Usecase.Deps
     - Usecase.Init
+    - Usecase.Download
     - Di
 
 executables:

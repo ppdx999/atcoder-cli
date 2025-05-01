@@ -11,6 +11,7 @@ import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (stderr)
 import Types (AppError (ProviderError), toContestId)
+import Usecase.Download (download)
 import Usecase.Init (initContest)
 
 main :: IO ()
@@ -24,6 +25,7 @@ runMain :: [T.Text] -> ExceptT AppError IO ()
 runMain ["init", contestIdStr] = do
   contestId <- liftEither $ toContestId contestIdStr
   initContest contestId
+runMain ["download"] = download
 runMain _ =
   throwE $ ProviderError "Invalid arguments: Usage: atcli <contest-id>"
 

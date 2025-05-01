@@ -28,11 +28,13 @@ library
       Types
       Usecase.Deps
       Usecase.Init
+      Usecase.Download
       Di
   other-modules:
       Provider.Atcoder
       Provider.FileSystem
       Provider.Logger
+      Usecase.Utils
       Paths_atcli
   hs-source-dirs:
       src
@@ -77,6 +79,7 @@ test-suite atcli-test
   other-modules:
       Mock
       TypesSpec
+      Usecase.DownloadSpec
       Usecase.InitSpec
       Paths_atcli
   hs-source-dirs:

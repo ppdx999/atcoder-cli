@@ -1,16 +1,18 @@
--- src/Providerstructure/FileSystem.hs
-{-# LANGUAGE OverloadedStrings #-}
-
 module Provider.FileSystem
   ( createDirectoryIO,
+    getCurrentDirectoryIO,
+    saveFileIO,
   )
 where
 
 import Control.Monad.Catch (try)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.Text as T
 -- ProviderError を使う
-import GHC.IO.Exception (IOException) -- 例外型
+-- 例外型
+
+import qualified Data.ByteString as BS
+import qualified Data.Text as T
+import GHC.IO.Exception (IOException)
 import qualified System.Directory as Dir
 import Types (AppError (..))
 
@@ -23,4 +25,15 @@ createDirectoryIO path = do
   case result of
     Right () -> pure $ Right ()
     -- 捕捉した IOException を AppError (ProviderError) に変換
+    Left e -> pure $ Left (ProviderError (T.pack $ show (e :: IOException)))
+
+getCurrentDirectoryIO :: (MonadIO m) => m FilePath
+getCurrentDirectoryIO = liftIO Dir.getCurrentDirectory
+
+-- ファイル保存の IO 実装
+saveFileIO :: (MonadIO m) => FilePath -> BS.ByteString -> m (Either AppError ())
+saveFileIO path content = do
+  result <- liftIO $ try (BS.writeFile path content)
+  case result of
+    Right () -> pure $ Right ()
     Left e -> pure $ Left (ProviderError (T.pack $ show (e :: IOException)))
