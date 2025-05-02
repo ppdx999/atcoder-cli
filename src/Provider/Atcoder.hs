@@ -1,41 +1,53 @@
--- src/Provider/Atcoder.hs
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Provider.Atcoder
-  ( -- 現状のダミー実装 (テストや初期開発で使うかも)
-    fetchProblemIdsDummyIO,
+  ( fetchProblemIdsDummyIO,
     fetchTestCasesDummyIO,
-    -- 実際の IO 実装 (これから実装)
     fetchProblemIdsIO,
     fetchTestCasesIO,
-    -- 実際の処理に必要な環境 (req用に調整、必要なら変更)
     AtCoderEnv (..),
     createAtCoderEnv,
   )
 where
 
--- 例外処理のために保持
-
--- import qualified Data.ByteString.Lazy as LBS -- req は Strict ByteString を主に使うかも
-
--- import Network.HTTP.Req -- req ライブラリをインポート (あとで追加)
--- import Text.Regex.TDFA -- 正規表現ライブラリをインポート (あとで追加)
-
-import Control.Exception (IOException) -- IOException はネットワークエラーなどで発生しうる
-import Control.Monad.Catch (MonadThrow)
+import Control.Exception (IOException)
+import Control.Monad.Catch (MonadThrow, SomeException, try)
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Trans.Except (runExceptT, throwE)
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
+import qualified Data.List as List
+-- For decoding ByteString
+
+import Data.Maybe (listToMaybe, mapMaybe)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TEnc
 import qualified Data.Text.IO as TIO
+import Interface (MonadReq (..))
+import Network.HTTP.Req
+  ( GET (GET),
+    NoReqBody (NoReqBody),
+    Url (..),
+    bsResponse,
+    defaultHttpConfig,
+    req,
+    responseBody,
+    runReq,
+    useHttpsURI,
+    useURI,
+  )
+import Text.Regex.TDFA
+import Text.Regex.TDFA.Text
+import Text.URI (URI, mkURI)
 import Types
 
--- | AtCoder との通信に必要な環境 (req 用に調整、シンプルに)
---   req は Manager を明示的に管理しないことが多いので削除。
---   将来的にクッキーなどが必要ならここに追加。
 data AtCoderEnv = AtCoderEnv
   {
   }
-  -- acSessionCookie :: Maybe SessionCookie -- 例: セッションクッキー
   deriving (Show)
 
 -- | AtCoderEnv を初期化する IO アクション (現状は空)
@@ -57,51 +69,66 @@ fetchTestCasesDummyIO task = liftIO $ do
   pure $ Right [tc1, tc2]
 
 -- | Real IO implementation for fetchProblemList (骨格 - req + Regex 想定)
-fetchProblemIdsIO :: (MonadIO m, MonadThrow m) => AtCoderEnv -> ContestId -> m (Either AppError [ProblemId])
-fetchProblemIdsIO _env contestId = do
-  let url = "https://atcoder.jp/contests/" <> T.unpack (deContestId contestId) <> "/tasks"
-  liftIO $ TIO.putStrLn $ "[Skeleton] Fetching problems from: " <> T.pack url
-
-  -- ここで req を使って HTTP GET リクエストを送信する
-  -- 例: response <- liftIO $ try $ runReq defaultHttpConfig $ do ... req GET ...
-  --     case response of
-  --       Left e -> pure $ Left (ProviderError (T.pack $ show (e :: SomeException))) -- req の例外型に合わせる
-  --       Right httpResponse -> do
-  --         let body = responseBody httpResponse -- req のレスポンスボディ取得方法に合わせる
-  --         liftIO $ TIO.putStrLn "[Skeleton] Parsing HTML response for problems using Regex..."
-  --         -- ここで正規表現を使って ProblemId を抽出する
-  --         -- pure $ parseProblemIdsWithRegex body
-  --         pure $ Left (ProviderError "Problem ID parsing (Regex) not implemented yet.")
-
-  -- TDD のための仮実装
-  pure $ Left (ProviderError "fetchProblemIdsIO not implemented yet.")
+fetchProblemIdsIO ::
+  ( MonadIO m,
+    MonadReq m
+  ) =>
+  AtCoderEnv ->
+  ContestId ->
+  m (Either AppError [ProblemId])
+fetchProblemIdsIO env contestId =
+  fetchTaskPage env contestId
+    >>= either (pure . Left) parseProblemIdsWithRegex
 
 -- | Real IO implementation for fetchTestCases (骨格 - req + Regex 想定)
-fetchTestCasesIO :: (MonadIO m, MonadThrow m) => AtCoderEnv -> Task -> m (Either AppError [TestCase])
+fetchTestCasesIO ::
+  (MonadIO m, MonadReq m) =>
+  AtCoderEnv ->
+  Task ->
+  m (Either AppError [TestCase])
 fetchTestCasesIO _env task = do
   let contest = deContestId (taskContestId task)
   let problem = deProblemId (taskProblemId task)
   let url = "https://atcoder.jp/contests/" <> T.unpack contest <> "/tasks/" <> T.unpack contest <> "_" <> T.unpack problem
   liftIO $ TIO.putStrLn $ "[Skeleton] Fetching test cases from: " <> T.pack url
 
-  -- ここで req を使って HTTP GET リクエストを送信する
-  -- 例: response <- liftIO $ try $ runReq defaultHttpConfig $ do ... req GET ...
-  --     case response of
-  --       Left e -> pure $ Left (ProviderError (T.pack $ show (e :: SomeException)))
-  --       Right httpResponse -> do
-  --         let body = responseBody httpResponse
-  --         liftIO $ TIO.putStrLn "[Skeleton] Parsing HTML response for test cases using Regex..."
-  --         -- ここで正規表現を使って TestCase を抽出する
-  --         -- pure $ parseTestCasesWithRegex body
-  --         pure $ Left (ProviderError "Test case parsing (Regex) not implemented yet.")
+  eResponse <- reqGet url
 
-  -- TDD のための仮実装
-  pure $ Left (ProviderError "fetchTestCasesIO not implemented yet.")
+  case eResponse of
+    Left err -> pure $ Left err
+    Right body -> do
+      liftIO $ TIO.putStrLn "[Skeleton] Parsing HTML response for test cases using Regex..."
+      -- ここで正規表現を使って TestCase を抽出する
+      let eTestCases = parseTestCasesWithRegex body -- 仮の呼び出し
+      pure eTestCases
 
--- --- Regex Parsing Helpers (未実装 - 必要に応じて追加) ---
+-- --- Page Fetching Helpers ---
+fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError BS.ByteString)
+fetchTaskPage _env contestId = do
+  let url = "https://atcoder.jp/contests/" <> T.unpack (deContestId contestId) <> "/tasks"
+  liftIO $ TIO.putStrLn $ "Fetching problems from: " <> T.pack url
+  reqGet url
 
--- parseProblemIdsWithRegex :: ResponseBody -> Either AppError [ProblemId]
--- parseProblemIdsWithRegex body = ...
+-- --- Regex Parsing Helpers ---
 
--- parseTestCasesWithRegex :: ResponseBody -> Either AppError [TestCase]
--- parseTestCasesWithRegex body = ...
+-- | Parses Problem IDs from HTML ByteString using regex.
+parseProblemIdsWithRegex :: (MonadIO m) => BSC.ByteString -> m (Either AppError [ProblemId])
+parseProblemIdsWithRegex body = do
+  liftIO $ TIO.putStrLn "[Skeleton] Parsing HTML response for test cases using Regex..."
+  return $ parseProblemIdsWithRegex' body
+
+parseProblemIdsWithRegex' :: BSC.ByteString -> Either AppError [ProblemId]
+parseProblemIdsWithRegex' body =
+  traverse toProblemId
+    . List.nub
+    . map (T.takeWhileEnd (/= '_'))
+    $ getAllTextMatches (decoded =~ pattern)
+  where
+    decoded = TEnc.decodeUtf8 body
+    pattern :: T.Text
+    pattern = "/contests/[^/]+/tasks/[^/]+_[a-zA-Z0-9]+"
+
+parseTestCasesWithRegex :: BSC.ByteString -> Either AppError [TestCase]
+parseTestCasesWithRegex _body =
+  -- ここに正規表現を使ったパース処理を実装
+  Left (ProviderError "Test case parsing (Regex) not implemented yet.")
