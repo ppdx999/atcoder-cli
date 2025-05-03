@@ -14,35 +14,15 @@ module Provider.Atcoder
   )
 where
 
-import Control.Exception (IOException)
-import Control.Monad.Catch (MonadThrow, SomeException, try)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Trans.Except (runExceptT, throwE)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.List as List
--- For decoding ByteString
-
-import Data.Maybe (listToMaybe, mapMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TEnc
 import qualified Data.Text.IO as TIO
 import Interface (MonadReq (..))
-import Network.HTTP.Req
-  ( GET (GET),
-    NoReqBody (NoReqBody),
-    Url (..),
-    bsResponse,
-    defaultHttpConfig,
-    req,
-    responseBody,
-    runReq,
-    useHttpsURI,
-    useURI,
-  )
 import Text.Regex.TDFA
-import Text.Regex.TDFA.Text
-import Text.URI (URI, mkURI)
 import Types
 
 data AtCoderEnv = AtCoderEnv
@@ -86,27 +66,30 @@ fetchTestCasesIO ::
   AtCoderEnv ->
   Task ->
   m (Either AppError [TestCase])
-fetchTestCasesIO _env task = do
-  let contest = deContestId (taskContestId task)
-  let problem = deProblemId (taskProblemId task)
-  let url = "https://atcoder.jp/contests/" <> T.unpack contest <> "/tasks/" <> T.unpack contest <> "_" <> T.unpack problem
-  liftIO $ TIO.putStrLn $ "[Skeleton] Fetching test cases from: " <> T.pack url
-
-  eResponse <- reqGet url
-
-  case eResponse of
-    Left err -> pure $ Left err
-    Right body -> do
-      liftIO $ TIO.putStrLn "[Skeleton] Parsing HTML response for test cases using Regex..."
-      -- ここで正規表現を使って TestCase を抽出する
-      let eTestCases = parseTestCasesWithRegex body -- 仮の呼び出し
-      pure eTestCases
+fetchTestCasesIO env task = do
+  fetchProblemPage env task
+    >>= either (pure . Left) parseTestCasesWithRegex
 
 -- --- Page Fetching Helpers ---
 fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError BS.ByteString)
 fetchTaskPage _env contestId = do
   let url = "https://atcoder.jp/contests/" <> T.unpack (deContestId contestId) <> "/tasks"
   liftIO $ TIO.putStrLn $ "Fetching problems from: " <> T.pack url
+  reqGet url
+
+fetchProblemPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> Task -> m (Either AppError BS.ByteString)
+fetchProblemPage _env task = do
+  let contest = deContestId (taskContestId task)
+  let prefix = T.replace "-" "_" contest
+  let problem = deProblemId (taskProblemId task)
+  let url =
+        "https://atcoder.jp/contests/"
+          <> T.unpack contest
+          <> "/tasks/"
+          <> T.unpack prefix
+          <> "_"
+          <> T.unpack problem
+  liftIO $ TIO.putStrLn $ "[Skeleton] Fetching test cases from: " <> T.pack url
   reqGet url
 
 -- --- Regex Parsing Helpers ---
@@ -128,7 +111,48 @@ parseProblemIdsWithRegex' body =
     pattern :: T.Text
     pattern = "/contests/[^/]+/tasks/[^/]+_[a-zA-Z0-9]+"
 
-parseTestCasesWithRegex :: BSC.ByteString -> Either AppError [TestCase]
-parseTestCasesWithRegex _body =
-  -- ここに正規表現を使ったパース処理を実装
-  Left (ProviderError "Test case parsing (Regex) not implemented yet.")
+parseTestCasesWithRegex :: (MonadIO m) => BSC.ByteString -> m (Either AppError [TestCase])
+parseTestCasesWithRegex body = do
+  liftIO $ TIO.putStrLn "Parsing HTML response for test cases using Regex..."
+  return $ parseTestCasesWithRegex' body
+
+parseTestCasesWithRegex' :: BSC.ByteString -> Either AppError [TestCase]
+parseTestCasesWithRegex' body = do
+  pairs <-
+    pairUp
+      . map extractPreContents
+      . extractSampleLine
+      . TEnc.decodeUtf8
+      $ body
+  Right (map mkTestCase $ zipPairs pairs)
+  where
+    extractSampleLine :: T.Text -> [T.Text]
+    extractSampleLine html = getAllTextMatches (html =~ pattern) :: [T.Text]
+      where
+        pattern :: T.Text
+        pattern = "<h3>(入力例|出力例)[[:space:]]*[[:digit:]]+</h3>[[:space:]]*<pre>([^<]*)</pre>"
+
+    extractPreContents :: T.Text -> T.Text
+    extractPreContents line = case matches of
+      (_, _, _, [content]) -> T.strip content
+      _ -> ""
+      where
+        pattern' :: T.Text
+        pattern' = "<pre>([^<]*)</pre>"
+        matches = line =~ pattern' :: (T.Text, T.Text, T.Text, [T.Text])
+
+    mkTestCase :: (Int, (T.Text, T.Text)) -> TestCase
+    mkTestCase (i, (input, output)) =
+      TestCase
+        { tcName = T.pack (show i),
+          tcInput = TEnc.encodeUtf8 $ input <> "\n",
+          tcOutput = TEnc.encodeUtf8 $ output <> "\n"
+        }
+
+    pairUp :: [a] -> Either AppError [(a, a)]
+    pairUp [] = Right []
+    pairUp (x : y : rest) = ((x, y) :) <$> pairUp rest
+    pairUp _ = Left $ ProviderError "pairUp: odd length list"
+
+    zipPairs :: [(a, a)] -> [(Int, (a, a))]
+    zipPairs = zip [1 ..]

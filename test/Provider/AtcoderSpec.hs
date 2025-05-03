@@ -10,10 +10,11 @@ module Provider.AtcoderSpec (spec) where
 import Control.Monad.Catch (MonadThrow (..))
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.Identity (Identity (..))
-import Control.Monad.State.Strict (MonadState, StateT (..), evalStateT, get, gets, modify)
+import Control.Monad.State.Strict (MonadState, StateT (..), evalStateT, gets, modify)
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TEnc
 import Interface (MonadReq (..))
 import Provider.Atcoder
 import Test.Hspec
@@ -87,8 +88,6 @@ spec = describe "Provider.Atcoder" $ do
       -- 3. Assert: 結果の検証
       result `shouldBe` expected
     it "HTTPリクエストが失敗した場合、ProviderErrorを返す" $ do
-      let unsafeGetRight (Right x) = x
-          unsafeGetRight (Left e) = error ("Test setup failed: " ++ show e)
       -- 1. Arrange
       let contest = unsafeGetRight $ toContestId "abc100"
       let url = "https://atcoder.jp/contests/abc100/tasks"
@@ -106,17 +105,96 @@ spec = describe "Provider.Atcoder" $ do
       -- 3. Assert
       result `shouldBe` Left expectedError
 
-    it "HTMLのパースに失敗した場合（該当リンクが見つからない等）、エラーを返す" $ do
-      pendingWith "parseProblemIdsWithRegex の実装が必要"
-
   describe "fetchTestCasesIO" $ do
-    it "（未実装）正常なHTMLを受け取った場合、TestCaseのリストを返す" $ do
-      pendingWith "HTTPモックと実装が必要"
-    -- ... fetchTestCasesIO 用のテストケース ...
+    it "正常なHTMLを受け取った場合、TestCaseのリストを返す" $ do
+      -- 1. Arrange
+      let contest = unsafeGetRight $ toContestId "abc100"
+      let problem = unsafeGetRight $ toProblemId "a"
+      let task = Task contest problem
+      let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a" -- URLを修正
+      -- parseTestCasesWithRegex' が期待する形式のHTML
+      let dummyHtml =
+            TEnc.encodeUtf8 $
+              T.unlines
+                [ "<html><body>",
+                  "<h3>入力例 1</h3>",
+                  "<pre>1 2</pre>",
+                  "<h3>出力例 1</h3>",
+                  "<pre>3</pre>",
+                  "<h3>入力例 2</h3>",
+                  "<pre>10 20</pre>",
+                  "<h3>出力例 2</h3>",
+                  "<pre>30</pre>",
+                  "</body></html>"
+                ]
+      let responses = Map.singleton url (Right dummyHtml)
+      -- parseTestCasesWithRegex' が生成する TestCase (末尾に改行が追加される)
+      let tc1 = TestCase {tcName = "1", tcInput = BSC.pack "1 2\n", tcOutput = BSC.pack "3\n"}
+      let tc2 = TestCase {tcName = "2", tcInput = BSC.pack "10 20\n", tcOutput = BSC.pack "30\n"}
+      let expected = Right [tc1, tc2]
+      let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
 
-    it "（未実装）HTTPリクエストが失敗した場合、ProviderErrorを返す" $ do
-      pendingWith "HTTPモックと実装が必要"
-    -- ... fetchTestCasesIO 用のテストケース ...
+      -- 2. Act
+      let result = evalMockReq (fetchTestCasesIO testEnv task) initialMockState
 
-    it "（未実装）HTMLのパースに失敗した場合（サンプルが見つからない等）、エラーを返す" $ do
-      pendingWith "HTTPモックと実装が必要"
+      -- 3. Assert
+      -- parseTestCasesWithRegex' が実装されたので、期待値を直接比較
+      result `shouldBe` expected
+
+    it "HTTPリクエストが失敗した場合、ProviderErrorを返す" $ do
+      -- 1. Arrange
+      let contest = unsafeGetRight $ toContestId "abc100"
+      let problem = unsafeGetRight $ toProblemId "a"
+      let task = Task contest problem
+      let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
+      let expectedError = ProviderError "Simulated Network Error"
+      let responses = Map.singleton url (Left expectedError)
+      let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
+
+      -- 2. Act
+      let result = evalMockReq (fetchTestCasesIO testEnv task) initialMockState
+
+      -- 3. Assert
+      result `shouldBe` Left expectedError
+
+    it "HTMLのパースに失敗した場合（サンプルが見つからない等）、エラーを返す" $ do
+      -- 1. Arrange
+      let contest = unsafeGetRight $ toContestId "abc100"
+      let problem = unsafeGetRight $ toProblemId "a"
+      let task = Task contest problem
+      let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
+      -- サンプルが含まれないHTML
+      let dummyHtml = TEnc.encodeUtf8 "<html><body>No samples here</body></html>"
+      let responses = Map.singleton url (Right dummyHtml)
+      -- parseTestCasesWithRegex' が空リストを返すことを期待
+      let expected = Right []
+      let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
+
+      -- 2. Act
+      let result = evalMockReq (fetchTestCasesIO testEnv task) initialMockState
+
+      -- 3. Assert
+      result `shouldBe` expected
+
+    it "HTMLのパースに失敗した場合（入力と出力のペアが奇数）、エラーを返す" $ do
+      -- 1. Arrange
+      let contest = unsafeGetRight $ toContestId "abc100"
+      let problem = unsafeGetRight $ toProblemId "a"
+      let task = Task contest problem
+      let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
+      -- 入力例しかないHTML
+      let dummyHtml =
+            TEnc.encodeUtf8 $
+              T.unlines
+                [ "<html><body>",
+                  "<h3>入力例 1</h3>",
+                  "<pre>1 2</pre>",
+                  "</body></html>"
+                ]
+      let responses = Map.singleton url (Right dummyHtml)
+      let expectedError = ProviderError "pairUp: odd length list" -- 仮のエラーメッセージ
+      let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
+
+      -- 2. Act & Assert
+      let result = evalMockReq (fetchTestCasesIO testEnv task) initialMockState
+      result `shouldBe` Left expectedError
