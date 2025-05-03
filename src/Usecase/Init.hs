@@ -5,7 +5,7 @@ module Usecase.Init
   )
 where
 
-import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Trans.Except (ExceptT (ExceptT))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
@@ -21,19 +21,25 @@ initContest ::
   ContestId ->
   ExceptT AppError m ()
 initContest contestId@(ContestId contestIdText) = do
-  lift $ logInfo $ "Initializing contest: " <> contestIdText
+  logInfoE $ "Initializing contest: " <> contestIdText
 
-  lift $ logInfo $ "Creating directory: " <> contestIdText
-  ExceptT $ createDirectory $ T.unpack contestIdText
+  logInfoE $ "Creating directory: " <> contestIdText
+  ExceptT $ createDirectory' contestIdText
 
-  lift $ logInfo "Fetching problem list..."
+  logInfoE "Fetching problem list..."
   problemIds <- ExceptT $ fetchProblemIds contestId
-
-  lift $ logInfo $ "Found " <> T.pack (show $ length problemIds) <> " problems."
-
-  let createProblemDir (ProblemId problemIdText) = do
-        let problemDir = T.unpack contestIdText </> T.unpack problemIdText
-        lift $ logInfo $ "Creating directory: " <> T.pack problemDir
-        ExceptT $ createDirectory problemDir
+  logInfoE $ "Found " <> T.pack (show $ length problemIds) <> " problems."
 
   traverse_ createProblemDir problemIds
+  where
+    logInfoE :: (HasLogger m, MonadTrans t) => T.Text -> t m ()
+    logInfoE = lift . logInfo
+    createDirectory' :: (HasFileSystem m) => T.Text -> m (Either AppError ())
+    createDirectory' = createDirectory . T.unpack
+    createProblemDir :: (HasFileSystem m, HasLogger m) => ProblemId -> ExceptT AppError m ()
+    createProblemDir (ProblemId problemIdText) = do
+      let dir = filepathJoin contestIdText problemIdText
+      logInfoE $ "Creating directory: " <> dir
+      ExceptT $ createDirectory' dir
+    filepathJoin :: T.Text -> T.Text -> T.Text
+    filepathJoin parent child = T.pack (T.unpack parent </> T.unpack child)

@@ -6,7 +6,7 @@ module Usecase.Download
   )
 where
 
-import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Trans.Except (ExceptT (..))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
@@ -21,21 +21,21 @@ download ::
   ) =>
   ExceptT AppError m ()
 download = do
-  lift $ logInfo "Starting download..."
+  logInfoE "Starting download..."
 
   -- 1. カレントディレクトリから Task を取得
   currentDir <- lift getCurrentDirectory
   task@(Task (ContestId cid) (ProblemId pid)) <- ExceptT $ pure $ parseTaskFromPath currentDir
-  lift $ logInfo $ "Target: Contest=" <> cid <> ", Problem=" <> pid
+  logInfoE $ "Target: Contest=" <> cid <> ", Problem=" <> pid
 
   -- 2. テストケースを取得
-  lift $ logInfo "Fetching test cases..."
+  logInfoE "Fetching test cases..."
   testCases <- ExceptT $ fetchTestCases task
-  lift $ logInfo $ "Found " <> T.pack (show $ length testCases) <> " test cases."
+  logInfoE $ "Found " <> T.pack (show $ length testCases) <> " test cases."
 
   -- 3. 各テストケースを保存
   let testDir = currentDir </> "test" -- 保存先ディレクトリ
-  lift $ logInfo $ "Saving test cases to " <> T.pack testDir <> " ..."
+  logInfoE $ "Saving test cases to " <> T.pack testDir <> " ..."
 
   -- ./test ディレクトリを作成 (存在していてもエラーにならないようにする)
   -- createDirectory は Either を返すので ExceptT でラップ
@@ -91,3 +91,6 @@ download = do
         isTrailingSeparator path = case reverse path of
           (c : _) -> c == pathSeparator
           [] -> False
+
+    logInfoE :: (HasLogger m, MonadTrans t) => T.Text -> t m ()
+    logInfoE = lift . logInfo
