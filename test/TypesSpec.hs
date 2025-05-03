@@ -8,31 +8,30 @@ import Types
 
 spec :: Spec
 spec = do
-  describe "toContestId" $ do
+  describe "validateContestId" $ do
     it "accepts valid contest ids" $ do
-      let result = toContestId "abc100"
+      let result = validateContestId "abc100"
       result `shouldSatisfy` isRight -- まず Right であることを確認
-      -- Right の中身を deContestId で取り出して検証
-      fmap deContestId result `shouldBe` Right "abc100"
+      result `shouldBe` Right (ContestId "abc100")
 
     it "rejects empty contest id" $
       -- Left の値は直接比較できる (AppError のコンストラクタはエクスポートされているため)
-      toContestId "" `shouldBe` Left (InvalidContestId "Contest ID cannot be empty.")
+      validateContestId "" `shouldBe` Left (InvalidContestId "Contest ID cannot be empty.")
 
     it "rejects invalid characters in contest id" $
-      toContestId "Abc100" `shouldSatisfy` isLeft
+      validateContestId "Abc100" `shouldSatisfy` isLeft
 
-  describe "toProblemId" $ do
+  describe "validateProblemId" $ do
     it "accepts valid problem ids" $ do
-      let result = toProblemId "a"
+      let result = validateProblemId "a"
       result `shouldSatisfy` isRight
-      fmap deProblemId result `shouldBe` Right "a"
+      result `shouldBe` Right (ProblemId "a")
 
     it "rejects empty problem id" $
-      toProblemId "" `shouldBe` Left (InvalidProblemId "Problem ID cannot be empty.")
+      validateProblemId "" `shouldBe` Left (InvalidProblemId "Problem ID cannot be empty.")
 
     it "rejects invalid characters in problem id" $
-      toProblemId "A1" `shouldSatisfy` isLeft
+      validateProblemId "A1" `shouldSatisfy` isLeft
 
   describe "toLanguageId" $ do
     it "accepts positive language id" $ do

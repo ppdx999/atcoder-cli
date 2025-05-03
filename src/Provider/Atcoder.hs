@@ -36,14 +36,14 @@ createAtCoderEnv = pure AtCoderEnv {} -- 今は特に設定するものがない
 
 -- | Dummy IO implementation for fetchProblemList
 fetchProblemIdsDummyIO :: (MonadIO m) => ContestId -> m (Either AppError [ProblemId])
-fetchProblemIdsDummyIO c = liftIO $ do
-  TIO.putStrLn $ ">>> Simulating: Fetching problems for " <> deContestId c
-  pure $ sequenceA [toProblemId "a", toProblemId "b"]
+fetchProblemIdsDummyIO (ContestId contestIdText) = liftIO $ do
+  TIO.putStrLn $ ">>> Simulating: Fetching problems for " <> contestIdText
+  pure $ sequenceA [validateProblemId "a", validateProblemId "b"]
 
 -- | Dummy IO implementation for fetchTestCases
 fetchTestCasesDummyIO :: (MonadIO m) => Task -> m (Either AppError [TestCase])
-fetchTestCasesDummyIO task = liftIO $ do
-  TIO.putStrLn $ ">>> Simulating: Fetching test cases for " <> deContestId (taskContestId task) <> "/" <> deProblemId (taskProblemId task)
+fetchTestCasesDummyIO (Task (ContestId c) (ProblemId p)) = liftIO $ do
+  TIO.putStrLn $ ">>> Simulating: Fetching test cases for " <> c <> "/" <> p
   let tc1 = TestCase "sample1" (BSC.pack "1 2\n") (BSC.pack "3\n")
   let tc2 = TestCase "sample2" (BSC.pack "10 20\n") (BSC.pack "30\n")
   pure $ Right [tc1, tc2]
@@ -72,23 +72,20 @@ fetchTestCasesIO env task = do
 
 -- --- Page Fetching Helpers ---
 fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError BS.ByteString)
-fetchTaskPage _env contestId = do
-  let url = "https://atcoder.jp/contests/" <> T.unpack (deContestId contestId) <> "/tasks"
+fetchTaskPage _env (ContestId cid) = do
+  let url = "https://atcoder.jp/contests/" <> T.unpack cid <> "/tasks"
   liftIO $ TIO.putStrLn $ "Fetching problems from: " <> T.pack url
   reqGet url
 
 fetchProblemPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> Task -> m (Either AppError BS.ByteString)
-fetchProblemPage _env task = do
-  let contest = deContestId (taskContestId task)
-  let prefix = T.replace "-" "_" contest
-  let problem = deProblemId (taskProblemId task)
+fetchProblemPage _env (Task (ContestId cid) (ProblemId pid)) = do
   let url =
         "https://atcoder.jp/contests/"
-          <> T.unpack contest
+          <> T.unpack cid
           <> "/tasks/"
-          <> T.unpack prefix
+          <> T.unpack (T.replace "-" "_" cid)
           <> "_"
-          <> T.unpack problem
+          <> T.unpack pid
   liftIO $ TIO.putStrLn $ "[Skeleton] Fetching test cases from: " <> T.pack url
   reqGet url
 
@@ -102,7 +99,7 @@ parseProblemIdsWithRegex body = do
 
 parseProblemIdsWithRegex' :: BSC.ByteString -> Either AppError [ProblemId]
 parseProblemIdsWithRegex' body =
-  traverse toProblemId
+  traverse validateProblemId
     . List.nub
     . map (T.takeWhileEnd (/= '_'))
     $ getAllTextMatches (decoded =~ pattern)

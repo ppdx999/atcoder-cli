@@ -51,12 +51,9 @@ testEnv = AtCoderEnv {}
 
 spec :: Spec
 spec = describe "Provider.Atcoder" $ do
-  let unsafeGetRight (Right x) = x
-      unsafeGetRight (Left e) = error ("Test setup failed: " ++ show e)
   describe "fetchProblemIdsIO" $ do
     it "正常なHTMLを受け取った場合、ProblemIdのリストを返す" $ do
       -- 1. Arrange: モックの準備
-      let contest = unsafeGetRight $ toContestId "abc100"
       let url = "https://atcoder.jp/contests/abc100/tasks"
       -- AtCoder の実際の HTML 構造に近いダミーデータ (正規表現で抽出できる形式)
       let dummyHtml =
@@ -72,10 +69,7 @@ spec = describe "Provider.Atcoder" $ do
                   "</body></html>"
                 ]
       let responses = Map.singleton url (Right dummyHtml)
-      let expectedProblemA = unsafeGetRight $ toProblemId "a"
-      let expectedProblemB = unsafeGetRight $ toProblemId "b"
-      let expectedProblemC = unsafeGetRight $ toProblemId "c"
-      let expected = Right [expectedProblemA, expectedProblemB, expectedProblemC]
+      let expected = Right [ProblemId "a", ProblemId "b", ProblemId "c"]
       let initialMockState =
             MockReqState
               { mockResponses = responses,
@@ -83,13 +77,12 @@ spec = describe "Provider.Atcoder" $ do
               }
 
       -- 2. Act: テスト対象関数の実行
-      let result = evalMockReq (fetchProblemIdsIO testEnv contest) initialMockState
+      let result = evalMockReq (fetchProblemIdsIO testEnv (ContestId "abc100")) initialMockState
 
       -- 3. Assert: 結果の検証
       result `shouldBe` expected
     it "HTTPリクエストが失敗した場合、ProviderErrorを返す" $ do
       -- 1. Arrange
-      let contest = unsafeGetRight $ toContestId "abc100"
       let url = "https://atcoder.jp/contests/abc100/tasks"
       let expectedError = ProviderError "Simulated Network Error"
       let responses = Map.singleton url (Left expectedError)
@@ -100,7 +93,7 @@ spec = describe "Provider.Atcoder" $ do
               }
 
       -- 2. Act
-      let result = evalMockReq (fetchProblemIdsIO testEnv contest) initialMockState
+      let result = evalMockReq (fetchProblemIdsIO testEnv (ContestId "abc100")) initialMockState
 
       -- 3. Assert
       result `shouldBe` Left expectedError
@@ -108,9 +101,7 @@ spec = describe "Provider.Atcoder" $ do
   describe "fetchTestCasesIO" $ do
     it "正常なHTMLを受け取った場合、TestCaseのリストを返す" $ do
       -- 1. Arrange
-      let contest = unsafeGetRight $ toContestId "abc100"
-      let problem = unsafeGetRight $ toProblemId "a"
-      let task = Task contest problem
+      let task = Task (ContestId "abc100") (ProblemId "a")
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a" -- URLを修正
       -- parseTestCasesWithRegex' が期待する形式のHTML
       let dummyHtml =
@@ -143,9 +134,7 @@ spec = describe "Provider.Atcoder" $ do
 
     it "HTTPリクエストが失敗した場合、ProviderErrorを返す" $ do
       -- 1. Arrange
-      let contest = unsafeGetRight $ toContestId "abc100"
-      let problem = unsafeGetRight $ toProblemId "a"
-      let task = Task contest problem
+      let task = Task (ContestId "abc100") (ProblemId "a")
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
       let expectedError = ProviderError "Simulated Network Error"
       let responses = Map.singleton url (Left expectedError)
@@ -159,9 +148,7 @@ spec = describe "Provider.Atcoder" $ do
 
     it "HTMLのパースに失敗した場合（サンプルが見つからない等）、エラーを返す" $ do
       -- 1. Arrange
-      let contest = unsafeGetRight $ toContestId "abc100"
-      let problem = unsafeGetRight $ toProblemId "a"
-      let task = Task contest problem
+      let task = Task (ContestId "abc100") (ProblemId "a")
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
       -- サンプルが含まれないHTML
       let dummyHtml = TEnc.encodeUtf8 "<html><body>No samples here</body></html>"
@@ -178,9 +165,7 @@ spec = describe "Provider.Atcoder" $ do
 
     it "HTMLのパースに失敗した場合（入力と出力のペアが奇数）、エラーを返す" $ do
       -- 1. Arrange
-      let contest = unsafeGetRight $ toContestId "abc100"
-      let problem = unsafeGetRight $ toProblemId "a"
-      let task = Task contest problem
+      let task = Task (ContestId "abc100") (ProblemId "a")
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
       -- 入力例しかないHTML
       let dummyHtml =

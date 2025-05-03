@@ -1,12 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Types
-  ( ContestId,
-    toContestId,
-    deContestId,
-    ProblemId,
-    toProblemId,
-    deProblemId,
+  ( ContestId (..),
+    validateContestId,
+    ProblemId (..),
+    validateProblemId,
     Task (..),
     LanguageId,
     toLanguageId,
@@ -96,8 +94,8 @@ data AppError
   | ProviderError T.Text
   deriving (Eq, Show)
 
-toContestId :: T.Text -> Either AppError ContestId
-toContestId t
+validateContestId :: T.Text -> Either AppError ContestId
+validateContestId t
   | T.null t = Left (InvalidContestId "Contest ID cannot be empty.")
   | T.all validChar t = Right (ContestId t)
   | otherwise = Left (InvalidContestId ("Invalid characters in Contest ID: " <> t))
@@ -107,11 +105,8 @@ toContestId t
     validChar :: Char -> Bool
     validChar c = T.any (== c) validChars
 
-deContestId :: ContestId -> T.Text
-deContestId (ContestId t) = t
-
-toProblemId :: T.Text -> Either AppError ProblemId
-toProblemId t
+validateProblemId :: T.Text -> Either AppError ProblemId
+validateProblemId t
   | T.null t = Left (InvalidProblemId "Problem ID cannot be empty.")
   | T.all validChar t = Right (ProblemId t)
   | otherwise = Left (InvalidProblemId ("Invalid characters in Problem ID: " <> t))
@@ -120,9 +115,6 @@ toProblemId t
     validChars = "abcdefghijklmnopqrstuvwxyz"
     validChar :: Char -> Bool
     validChar c = T.any (== c) validChars
-
-deProblemId :: ProblemId -> T.Text
-deProblemId (ProblemId p) = p
 
 toLanguageId :: Int -> Either AppError LanguageId
 toLanguageId n

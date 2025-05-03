@@ -11,9 +11,8 @@ import Control.Monad.Trans.Except (ExceptT (..))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
 import Interface
-import System.FilePath ((</>))
+import System.FilePath (pathSeparator, takeBaseName, takeDirectory, (</>))
 import Types
-import Usecase.Utils (parseTaskFromPath)
 
 download ::
   ( HasLogger m,
@@ -26,9 +25,8 @@ download = do
 
   -- 1. カレントディレクトリから Task を取得
   currentDir <- lift getCurrentDirectory
-  task <- ExceptT $ pure $ parseTaskFromPath currentDir
-  let Task contestId problemId = task
-  lift $ logInfo $ "Target: Contest=" <> deContestId contestId <> ", Problem=" <> deProblemId problemId
+  task@(Task (ContestId cid) (ProblemId pid)) <- ExceptT $ pure $ parseTaskFromPath currentDir
+  lift $ logInfo $ "Target: Contest=" <> cid <> ", Problem=" <> pid
 
   -- 2. テストケースを取得
   lift $ logInfo "Fetching test cases..."
@@ -48,22 +46,48 @@ download = do
   traverse_ (saveSingleTestCase testDir) testCases
 
   lift $ logInfo "Download complete."
+  where
+    -- ヘルパー関数: 1つのテストケースを保存 (入力と出力)
+    saveSingleTestCase ::
+      ( HasLogger m,
+        HasFileSystem m
+      ) =>
+      FilePath -> -- 保存先ベースディレクトリ (./test)
+      TestCase ->
+      ExceptT AppError m ()
+    saveSingleTestCase baseDir testCase = do
+      let name = tcName testCase -- "sample1" など
+      let inFile = baseDir </> T.unpack name <> ".in"
+      let outFile = baseDir </> T.unpack name <> ".out"
 
--- ヘルパー関数: 1つのテストケースを保存 (入力と出力)
-saveSingleTestCase ::
-  ( HasLogger m,
-    HasFileSystem m
-  ) =>
-  FilePath -> -- 保存先ベースディレクトリ (./test)
-  TestCase ->
-  ExceptT AppError m ()
-saveSingleTestCase baseDir testCase = do
-  let name = tcName testCase -- "sample1" など
-  let inFile = baseDir </> T.unpack name <> ".in"
-  let outFile = baseDir </> T.unpack name <> ".out"
+      lift $ logInfo $ "Saving " <> T.pack inFile
+      ExceptT $ saveFile inFile (tcInput testCase)
 
-  lift $ logInfo $ "Saving " <> T.pack inFile
-  ExceptT $ saveFile inFile (tcInput testCase)
+      lift $ logInfo $ "Saving " <> T.pack outFile
+      ExceptT $ saveFile outFile (tcOutput testCase)
 
-  lift $ logInfo $ "Saving " <> T.pack outFile
-  ExceptT $ saveFile outFile (tcOutput testCase)
+    -- \| Parses ContestId and ProblemId from the last two directory components of a FilePath.
+    -- Example: "/path/to/abc100/a/" -> Right Task { taskContestId = "abc100", taskProblemId = "a" }
+    parseTaskFromPath :: FilePath -> Either AppError Task
+    parseTaskFromPath fp = do
+      let normalizedPath = dropTrailingSeparator fp
+      let problemIdStr = takeBaseName normalizedPath
+      let contestIdStr = takeBaseName (takeDirectory normalizedPath)
+
+      if null contestIdStr || null problemIdStr
+        then Left (ProviderError ("Could not parse contest/problem ID from path: " <> T.pack fp))
+        else do
+          contestId <- validateContestId (T.pack contestIdStr)
+          problemId <- validateProblemId (T.pack problemIdStr)
+          pure Task {taskContestId = contestId, taskProblemId = problemId}
+
+    -- \| Helper to remove trailing path separator if present.
+    dropTrailingSeparator :: FilePath -> FilePath
+    dropTrailingSeparator p =
+      if isTrailingSeparator p && length p > 1
+        then take (length p - 1) p
+        else p
+      where
+        isTrailingSeparator path = case reverse path of
+          (c : _) -> c == pathSeparator
+          [] -> False

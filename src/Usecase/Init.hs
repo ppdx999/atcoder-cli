@@ -20,21 +20,19 @@ initContest ::
   ) =>
   ContestId ->
   ExceptT AppError m ()
-initContest contestId = do
-  let contestName = deContestId contestId
-  lift $ logInfo $ "Initializing contest: " <> contestName
+initContest contestId@(ContestId contestIdText) = do
+  lift $ logInfo $ "Initializing contest: " <> contestIdText
 
-  let contestDir = T.unpack contestName
-  lift $ logInfo $ "Creating directory: " <> T.pack contestDir
-  ExceptT $ createDirectory contestDir
+  lift $ logInfo $ "Creating directory: " <> contestIdText
+  ExceptT $ createDirectory $ T.unpack contestIdText
 
   lift $ logInfo "Fetching problem list..."
   problemIds <- ExceptT $ fetchProblemIds contestId
 
   lift $ logInfo $ "Found " <> T.pack (show $ length problemIds) <> " problems."
 
-  let createProblemDir problemId = do
-        let problemDir = contestDir </> T.unpack (deProblemId problemId)
+  let createProblemDir (ProblemId problemIdText) = do
+        let problemDir = T.unpack contestIdText </> T.unpack problemIdText
         lift $ logInfo $ "Creating directory: " <> T.pack problemDir
         ExceptT $ createDirectory problemDir
 

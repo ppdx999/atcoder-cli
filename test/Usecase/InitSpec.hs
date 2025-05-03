@@ -13,12 +13,10 @@ import Usecase.Init (initContest)
 
 spec :: Spec
 spec = describe "Usecase.Init.initContest" $ do
-  let unsafeGetRight (Right x) = x
-      unsafeGetRight (Left e) = error ("Test setup failed: " ++ show e)
-  let contestId = unsafeGetRight $ toContestId "abc999"
+  let contestId = ContestId "abc999"
   let contestDir = "abc999"
-  let problemIdA = unsafeGetRight $ toProblemId "a"
-  let problemIdB = unsafeGetRight $ toProblemId "b"
+  let problemIdA = ProblemId "a"
+  let problemIdB = ProblemId "b"
   let problems = [problemIdA, problemIdB]
   let problemDirA = contestDir </> "a"
   let problemDirB = contestDir </> "b"

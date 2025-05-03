@@ -10,7 +10,7 @@ import Di (runAppM)
 import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (stderr)
-import Types (AppError (ProviderError), toContestId)
+import Types (AppError (ProviderError), validateContestId)
 import Usecase.Download (download)
 import Usecase.Init (initContest)
 
@@ -23,7 +23,7 @@ textize = map T.pack
 
 runMain :: [T.Text] -> ExceptT AppError IO ()
 runMain ["init", contestIdStr] = do
-  contestId <- liftEither $ toContestId contestIdStr
+  contestId <- liftEither $ validateContestId contestIdStr
   initContest contestId
 runMain ["download"] = download
 runMain _ =
