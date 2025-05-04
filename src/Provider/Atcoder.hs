@@ -127,7 +127,7 @@ parseTestCasesWithRegex' body = do
     extractSampleLine html = getAllTextMatches (html =~ pattern) :: [T.Text]
       where
         pattern :: T.Text
-        pattern = "<h3>(入力例|出力例)[[:space:]]*[[:digit:]]+</h3>[[:space:]]*<pre>([^<]*)</pre>"
+        pattern = "<h3>(入力例|出力例)[[:space:]]*[[:digit:]]+</h3>[[:space:]]*<pre>([[:print:][:space:]]*)[[:space:]]*</pre>"
 
     extractPreContents :: T.Text -> T.Text
     extractPreContents line = case matches of
@@ -135,16 +135,21 @@ parseTestCasesWithRegex' body = do
       _ -> ""
       where
         pattern' :: T.Text
-        pattern' = "<pre>([^<]*)</pre>"
+        pattern' = "<pre>([[:print:][:space:]]*)[[:space:]]*</pre>"
         matches = line =~ pattern' :: (T.Text, T.Text, T.Text, [T.Text])
 
     mkTestCase :: (Int, (T.Text, T.Text)) -> TestCase
     mkTestCase (i, (input, output)) =
       TestCase
         { tcName = T.pack (show i),
-          tcInput = TEnc.encodeUtf8 $ input <> "\n",
-          tcOutput = TEnc.encodeUtf8 $ output <> "\n"
+          tcInput = TEnc.encodeUtf8 $ wrapNewLine input,
+          tcOutput = TEnc.encodeUtf8 $ wrapNewLine output
         }
+
+    wrapNewLine :: T.Text -> T.Text
+    wrapNewLine txt
+      | T.isSuffixOf "\n" txt = txt
+      | otherwise = txt <> "\n"
 
     pairUp :: [a] -> Either AppError [(a, a)]
     pairUp [] = Right []

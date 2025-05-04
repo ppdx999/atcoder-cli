@@ -111,17 +111,20 @@ spec = describe "Provider.Atcoder" $ do
                   "<h3>入力例 1</h3>",
                   "<pre>1 2</pre>",
                   "<h3>出力例 1</h3>",
-                  "<pre>3</pre>",
+                  "<pre>3",
+                  "</pre>",
                   "<h3>入力例 2</h3>",
                   "<pre>10 20</pre>",
                   "<h3>出力例 2</h3>",
-                  "<pre>30</pre>",
+                  "<pre>30",
+                  "20",
+                  "</pre>",
                   "</body></html>"
                 ]
       let responses = Map.singleton url (Right dummyHtml)
       -- parseTestCasesWithRegex' が生成する TestCase (末尾に改行が追加される)
       let tc1 = TestCase {tcName = "1", tcInput = BSC.pack "1 2\n", tcOutput = BSC.pack "3\n"}
-      let tc2 = TestCase {tcName = "2", tcInput = BSC.pack "10 20\n", tcOutput = BSC.pack "30\n"}
+      let tc2 = TestCase {tcName = "2", tcInput = BSC.pack "10 20\n", tcOutput = BSC.pack "30\n20\n"}
       let expected = Right [tc1, tc2]
       let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
 
