@@ -7,10 +7,7 @@ module Types
     validateProblemId,
     Task (..),
     LanguageId,
-    toLanguageId,
     SourceFile,
-    toSourceFile,
-    SessionCookie (..),
     TestCase (..),
     SubmissionId (..),
     SubmissionState (..),
@@ -86,11 +83,6 @@ data Submission = Submission
 data AppError
   = InvalidContestId T.Text
   | InvalidProblemId T.Text
-  | InvalidLanguageId Int
-  | SourceFileNotFound FilePath
-  | CookieParseFailed T.Text
-  | DuplicateTestCase T.Text
-  | UnexpectedState T.Text
   | ProviderError T.Text
   deriving (Eq, Show)
 
@@ -116,12 +108,3 @@ validateProblemId t
     validChar :: Char -> Bool
     validChar c = T.any (== c) validChars
 
-toLanguageId :: Int -> Either AppError LanguageId
-toLanguageId n
-  | n > 0 = Right (LanguageId n)
-  | otherwise = Left (InvalidLanguageId n)
-
-toSourceFile :: FilePath -> Either AppError SourceFile
-toSourceFile path
-  | null path = Left (SourceFileNotFound path)
-  | otherwise = Right (SourceFile path)
