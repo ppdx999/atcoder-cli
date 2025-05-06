@@ -6,7 +6,7 @@ module Interface
     HasLogger (..),
     MonadReq (..),
     HasStdin (..),
-    HasConfig (..),
+    HasSession (..),
   )
 where
 
@@ -23,9 +23,12 @@ class (Monad m) => HasLogger m where
 class (Monad m, MonadThrow m) => HasFileSystem m where
   createDirectory :: FilePath -> m (Either AppError ())
   getCurrentDirectory :: m FilePath
+  readFile :: FilePath -> m (Either AppError ByteString)
   saveFile :: FilePath -> ByteString -> m (Either AppError ())
-  loadSession :: FilePath -> m (Either AppError Session)
-  saveSession :: FilePath -> Session -> m (Either AppError ())
+
+class (Monad m) => HasSession m where
+  loadSession :: m (Either AppError Session)
+  saveSession :: Session -> m (Either AppError ())
 
 class (Monad m) => HasAtcoder m where
   fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
@@ -37,6 +40,3 @@ class (Monad m) => MonadReq m where
 
 class (Monad m) => HasStdin m where
   readLine :: m Text
-
-class (Monad m) => HasConfig m where
-  getConfig :: m Config

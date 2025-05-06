@@ -36,6 +36,7 @@ library
       Provider.FileSystem
       Provider.Logger
       Provider.Req
+      Provider.Session
       Paths_atcli
   hs-source-dirs:
       src

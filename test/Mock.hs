@@ -21,7 +21,6 @@ import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Text (Text)
-import qualified Data.Text.Encoding as TEnc
 import Interface
 import Types
 
@@ -32,12 +31,13 @@ data MockState = MockState
     msCreateDirResult :: FilePath -> Either AppError (),
     msCurrentDir :: FilePath,
     msTestCasesResult :: Either AppError [TestCase],
+    msReadFiles :: Either AppError ByteString,
     msSaveFileResult :: FilePath -> ByteString -> Either AppError (),
     msSavedFiles :: Map FilePath ByteString,
     msStdinQueue :: [Text],
     msConfig :: Config,
-    msLoadSessionResult :: FilePath -> Either AppError Session,
-    msSaveSessionResult :: FilePath -> Session -> Either AppError (),
+    msLoadSessionResult :: Either AppError Session,
+    msSaveSessionResult :: Session -> Either AppError (),
     msSavedSessions :: [Session],
     msVerifySessionResultsQueue :: [Either AppError Bool]
   }
@@ -51,12 +51,13 @@ initialMockState =
       msCreateDirResult = \_ -> Right (),
       msCurrentDir = "/tmp/abc100/a",
       msTestCasesResult = Right [],
+      msReadFiles = Right "fileData",
       msSaveFileResult = \_ _ -> Right (),
       msSavedFiles = Map.empty,
       msStdinQueue = [],
       msConfig = Config {sessionPath = "/mock/session.txt"},
-      msLoadSessionResult = \_ -> Left SessionNotFound,
-      msSaveSessionResult = \_ _ -> Right (),
+      msLoadSessionResult = Left SessionNotFound,
+      msSaveSessionResult = \_ -> Right (),
       msSavedSessions = [],
       msVerifySessionResultsQueue = [Right False]
     }
@@ -87,6 +88,7 @@ instance HasFileSystem MockApp where
         pure $ Right ()
       Left err -> pure $ Left err
   getCurrentDirectory = gets msCurrentDir
+  readFile _filePath = gets msReadFiles
   saveFile path content = do
     resultFunc <- gets msSaveFileResult
     case resultFunc path content of
@@ -94,14 +96,13 @@ instance HasFileSystem MockApp where
         modify $ \s -> s {msSavedFiles = Map.insert path content (msSavedFiles s)}
         pure $ Right ()
       Left err -> pure $ Left err
-  loadSession path = do
-    resultFunc <- gets msLoadSessionResult
-    pure $ resultFunc path
-  saveSession path session = do
+
+instance HasSession MockApp where
+  loadSession = gets msLoadSessionResult
+  saveSession session = do
     resultFunc <- gets msSaveSessionResult
-    case resultFunc path session of
+    case resultFunc session of
       Right () -> do
-        modify $ \s -> s {msSavedFiles = Map.insert path (TEnc.encodeUtf8 (case session of (Session s') -> s')) (msSavedFiles s)}
         modify $ \s -> s {msSavedSessions = msSavedSessions s ++ [session]}
         pure $ Right ()
       Left err -> pure $ Left err
@@ -125,6 +126,3 @@ instance HasStdin MockApp where
       (x : xs) -> do
         modify $ \s -> s {msStdinQueue = xs}
         pure x
-
-instance HasConfig MockApp where
-  getConfig = gets msConfig

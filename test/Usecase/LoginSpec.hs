@@ -21,7 +21,7 @@ spec = describe "Usecase.Login" $ do
       -- Arrange
       let initialState =
             initialMockState
-              { msLoadSessionResult = \_ -> Right validSession,
+              { msLoadSessionResult = Right validSession,
                 msVerifySessionResultsQueue = [Right True]
               }
       -- Act
@@ -34,8 +34,8 @@ spec = describe "Usecase.Login" $ do
       -- Arrange
       let initialState =
             initialMockState
-              { msLoadSessionResult = \_ -> Left SessionNotFound,
-                msSaveSessionResult = \_ _ -> Right (),
+              { msLoadSessionResult = Left SessionNotFound,
+                msSaveSessionResult = \_ -> Right (),
                 msVerifySessionResultsQueue = [Right True],
                 msStdinQueue = [validSessionValue]
               }
@@ -50,8 +50,8 @@ spec = describe "Usecase.Login" $ do
       -- Arrange
       let initialState =
             initialMockState
-              { msLoadSessionResult = \_ -> Right (Session "old session"),
-                msSaveSessionResult = \_ _ -> Right (),
+              { msLoadSessionResult = Right (Session "old session"),
+                msSaveSessionResult = \_ -> Right (),
                 msVerifySessionResultsQueue = [Right False, Right True],
                 msStdinQueue = [validSessionValue]
               }
@@ -66,7 +66,7 @@ spec = describe "Usecase.Login" $ do
       -- Arrange
       let initialState =
             initialMockState
-              { msLoadSessionResult = \_ -> Left SessionNotFound,
+              { msLoadSessionResult = Left SessionNotFound,
                 msVerifySessionResultsQueue = [Right False],
                 msStdinQueue = ["invalid session"]
               }

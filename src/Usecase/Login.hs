@@ -8,26 +8,21 @@ import Control.Monad.Trans.Class (MonadTrans, lift)
 import Control.Monad.Trans.Except (ExceptT (ExceptT))
 import qualified Data.Text as T
 import Interface
-import Types (AppError (..), Config (sessionPath), Session (..), validateSession)
+import Types (AppError (..), Session (..), validateSession)
 
 login ::
   ( MonadIO m,
     HasLogger m,
     HasStdin m,
-    HasFileSystem m,
     HasAtcoder m,
-    HasConfig m
+    HasSession m
   ) =>
   ExceptT AppError m ()
 login = do
-  logInfoE "Load Configuration..."
-  config <- lift getConfig
-
   logInfoE "Load Session"
-  session <- lift $ loadSession (sessionPath config)
-
+  session <- lift loadSession
   case session of
-    Left SessionNotFound -> doLogin config
+    Left SessionNotFound -> doLogin
     Left e -> ExceptT $ return $ Left e
     Right s -> do
       logInfoE "Verify Session..."
@@ -37,10 +32,10 @@ login = do
         then logInfoE "すでにログインしています"
         else do
           logInfoE "現在保存されているセッション情報は古いため再度ログインを実行します..."
-          doLogin config
+          doLogin
   where
-    doLogin :: (HasStdin m, HasLogger m, HasFileSystem m, HasAtcoder m) => Config -> ExceptT AppError m ()
-    doLogin config = do
+    doLogin :: (HasStdin m, HasLogger m, HasSession m, HasAtcoder m) => ExceptT AppError m ()
+    doLogin = do
       logInfoE "Ask Session via stdin"
       session <- ExceptT askSession
 
@@ -48,7 +43,7 @@ login = do
       isValid <- ExceptT $ verifySession session
 
       logInfoE $ "This Session is " <> showBool isValid
-      when isValid $ ExceptT (saveSession (sessionPath config) session)
+      when isValid $ ExceptT (saveSession session)
 
       if isValid
         then logInfoE "ログインに成功しました"
