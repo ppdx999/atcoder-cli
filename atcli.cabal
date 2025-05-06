@@ -30,6 +30,7 @@ library
       Interface
       Usecase.Init
       Usecase.Download
+      Usecase.Login
       Provider.Atcoder
   other-modules:
       Provider.FileSystem
@@ -88,6 +89,7 @@ test-suite atcli-test
       TypesSpec
       Usecase.DownloadSpec
       Usecase.InitSpec
+      Usecase.LoginSpec
       Paths_atcli
   hs-source-dirs:
       test

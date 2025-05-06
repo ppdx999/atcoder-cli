@@ -44,6 +44,7 @@ library:
     - Interface
     - Usecase.Init
     - Usecase.Download
+    - Usecase.Login
     - Provider.Atcoder
 
 executables:

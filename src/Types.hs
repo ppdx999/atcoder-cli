@@ -8,10 +8,13 @@ module Types
     Task (..),
     LanguageId,
     SourceFile,
+    Session (..),
+    validateSession,
     TestCase (..),
     SubmissionId (..),
     SubmissionState (..),
     Submission (..),
+    Config (..),
     AppError (..),
   )
 where
@@ -44,7 +47,7 @@ newtype SourceFile = SourceFile FilePath
   deriving (Eq, Ord, Show)
 
 -- | Session Cookie as raw text
-newtype SessionCookie = SessionCookie T.Text
+newtype Session = Session T.Text
   deriving (Eq, Ord, Show)
 
 -- | A single test case (input/output pair)
@@ -79,10 +82,17 @@ data Submission = Submission
   }
   deriving (Eq, Show)
 
+-- | Configuration
+data Config = Config
+  { sessionPath :: FilePath
+  }
+
 -- | Types-layer errors
 data AppError
   = InvalidContestId T.Text
   | InvalidProblemId T.Text
+  | InvalidSession T.Text
+  | SessionNotFound
   | ProviderError T.Text
   deriving (Eq, Show)
 
@@ -108,3 +118,7 @@ validateProblemId t
     validChar :: Char -> Bool
     validChar c = T.any (== c) validChars
 
+validateSession :: T.Text -> Either AppError Session
+validateSession t
+  | T.null t = Left (InvalidSession "Session cannot be empty.")
+  | otherwise = Right (Session t)
