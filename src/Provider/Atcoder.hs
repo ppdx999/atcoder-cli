@@ -5,9 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Provider.Atcoder
-  ( fetchProblemIdsDummyIO,
-    fetchTestCasesDummyIO,
-    fetchProblemIdsIO,
+  ( fetchProblemIdsIO,
     fetchTestCasesIO,
     AtCoderEnv (..),
     createAtCoderEnv,
@@ -33,20 +31,6 @@ data AtCoderEnv = AtCoderEnv
 -- | AtCoderEnv を初期化する IO アクション (現状は空)
 createAtCoderEnv :: (MonadIO m) => m AtCoderEnv
 createAtCoderEnv = pure AtCoderEnv {} -- 今は特に設定するものがない
-
--- | Dummy IO implementation for fetchProblemList
-fetchProblemIdsDummyIO :: (MonadIO m) => ContestId -> m (Either AppError [ProblemId])
-fetchProblemIdsDummyIO (ContestId contestIdText) = liftIO $ do
-  TIO.putStrLn $ ">>> Simulating: Fetching problems for " <> contestIdText
-  pure $ sequenceA [validateProblemId "a", validateProblemId "b"]
-
--- | Dummy IO implementation for fetchTestCases
-fetchTestCasesDummyIO :: (MonadIO m) => Task -> m (Either AppError [TestCase])
-fetchTestCasesDummyIO (Task (ContestId c) (ProblemId p)) = liftIO $ do
-  TIO.putStrLn $ ">>> Simulating: Fetching test cases for " <> c <> "/" <> p
-  let tc1 = TestCase "sample1" (BSC.pack "1 2\n") (BSC.pack "3\n")
-  let tc2 = TestCase "sample2" (BSC.pack "10 20\n") (BSC.pack "30\n")
-  pure $ Right [tc1, tc2]
 
 -- | Real IO implementation for fetchProblemList (骨格 - req + Regex 想定)
 fetchProblemIdsIO ::
