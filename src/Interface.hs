@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Interface
@@ -12,8 +13,14 @@ where
 
 import Control.Monad.Catch (MonadThrow)
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as BSC
+import Data.Proxy (Proxy)
 import Data.Text (Text)
+import Network.HTTP.Req
+  ( HttpConfig,
+    HttpResponse,
+    Option,
+    Scheme (Https),
+  )
 import Types
 
 class (Monad m) => HasLogger m where
@@ -36,7 +43,22 @@ class (Monad m) => HasAtcoder m where
   verifySession :: Session -> m (Either AppError Bool)
 
 class (Monad m) => MonadReq m where
-  reqGet :: String -> m (Either AppError BSC.ByteString)
+  reqGet ::
+    (HttpResponse r) =>
+    String ->
+    Proxy r ->
+    HttpConfig ->
+    Option Https ->
+    m (Either AppError r)
+  reqGetWithSession ::
+    (HttpResponse r) =>
+    Session ->
+    String ->
+    Proxy r ->
+    HttpConfig ->
+    Option Https ->
+    m (Either AppError r)
+  getHtml :: String -> m (Either AppError Text)
 
 class (Monad m) => HasStdin m where
   readLine :: m Text

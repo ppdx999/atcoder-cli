@@ -8,12 +8,12 @@
 module Di (runAppM) where
 
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
-import qualified Data.ByteString.Char8 as BSC
 import Interface
-import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO)
+import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
 import Provider.FileSystem (createDirectoryIO, getCurrentDirectoryIO, readFileIO, saveFileIO)
 import Provider.Logger (logErrorIO, logInfoIO)
-import Provider.Req (reqGetIO)
+import Provider.Req (getHtmlIO, reqGetIO)
+import Provider.Session (loadSessionIO, saveSessionIO)
 import Types (AppError)
 
 instance HasLogger IO where
@@ -30,10 +30,16 @@ instance HasFileSystem IO where
 instance HasAtcoder IO where
   fetchProblemIds = fetchProblemIdsIO AtCoderEnv
   fetchTestCases = fetchTestCasesIO AtCoderEnv
+  verifySession = verifySessionIO AtCoderEnv
+
+instance HasSession IO where
+  loadSession = loadSessionIO
+  saveSession = saveSessionIO
 
 instance MonadReq IO where
-  reqGet :: String -> IO (Either AppError BSC.ByteString)
   reqGet = reqGetIO
+  reqGetWithSession = reqGetWithSession
+  getHtml = getHtmlIO
 
 runAppM :: ExceptT AppError IO a -> IO (Either AppError a)
 runAppM = runExceptT

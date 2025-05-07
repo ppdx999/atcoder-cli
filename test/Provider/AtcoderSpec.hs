@@ -37,10 +37,10 @@ instance MonadThrow MockReq where
   throwM e = error $ "MonadThrow MockReq: Unexpected throwM: " ++ show e
 
 instance MonadReq MockReq where
-  reqGet url = do
+  getHtml url = do
     responses <- gets mockResponses
     case Map.lookup url responses of
-      Just response -> pure response
+      Just response -> pure $ fmap TEnc.decodeUtf8 response
       Nothing -> pure $ Left (ProviderError $ "MockReq: No response defined for URL: " <> T.pack url)
 
 evalMockReq :: MockReq a -> MockReqState -> a

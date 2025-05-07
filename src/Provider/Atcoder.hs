@@ -13,8 +13,6 @@ module Provider.Atcoder
 where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as BSC
 import qualified Data.List as List
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TEnc
@@ -55,13 +53,13 @@ fetchTestCasesIO env task = do
     >>= either (pure . Left) parseTestCasesWithRegex
 
 -- --- Page Fetching Helpers ---
-fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError BS.ByteString)
+fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError T.Text)
 fetchTaskPage _env (ContestId cid) = do
   let url = "https://atcoder.jp/contests/" <> T.unpack cid <> "/tasks"
   liftIO $ TIO.putStrLn $ "Fetching problems from: " <> T.pack url
-  reqGet url
+  getHtml url
 
-fetchProblemPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> Task -> m (Either AppError BS.ByteString)
+fetchProblemPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> Task -> m (Either AppError T.Text)
 fetchProblemPage _env (Task (ContestId cid) (ProblemId pid)) = do
   let url =
         "https://atcoder.jp/contests/"
@@ -71,44 +69,42 @@ fetchProblemPage _env (Task (ContestId cid) (ProblemId pid)) = do
           <> "_"
           <> T.unpack pid
   liftIO $ TIO.putStrLn $ "[Skeleton] Fetching test cases from: " <> T.pack url
-  reqGet url
+  getHtml url
 
 -- --- Regex Parsing Helpers ---
 
 -- | Parses Problem IDs from HTML ByteString using regex.
-parseProblemIdsWithRegex :: (MonadIO m) => BSC.ByteString -> m (Either AppError [ProblemId])
+parseProblemIdsWithRegex :: (MonadIO m) => T.Text -> m (Either AppError [ProblemId])
 parseProblemIdsWithRegex body = do
   liftIO $ TIO.putStrLn "[Skeleton] Parsing HTML response for test cases using Regex..."
   return $ parseProblemIdsWithRegex' body
 
-parseProblemIdsWithRegex' :: BSC.ByteString -> Either AppError [ProblemId]
-parseProblemIdsWithRegex' body =
+parseProblemIdsWithRegex' :: T.Text -> Either AppError [ProblemId]
+parseProblemIdsWithRegex' html =
   traverse validateProblemId
     . List.nub
     . map (T.takeWhileEnd (/= '_'))
-    $ getAllTextMatches (decoded =~ pattern)
+    $ getAllTextMatches (html =~ pattern)
   where
-    decoded = TEnc.decodeUtf8 body
     pattern :: T.Text
     pattern = "/contests/[^/]+/tasks/[^/]+_[a-zA-Z0-9]+"
 
-parseTestCasesWithRegex :: (MonadIO m) => BSC.ByteString -> m (Either AppError [TestCase])
+parseTestCasesWithRegex :: (MonadIO m) => T.Text -> m (Either AppError [TestCase])
 parseTestCasesWithRegex body = do
   liftIO $ TIO.putStrLn "Parsing HTML response for test cases using Regex..."
   return $ parseTestCasesWithRegex' body
 
-parseTestCasesWithRegex' :: BSC.ByteString -> Either AppError [TestCase]
-parseTestCasesWithRegex' body = do
+parseTestCasesWithRegex' :: T.Text -> Either AppError [TestCase]
+parseTestCasesWithRegex' html = do
   pairs <-
     pairUp
       . map extractPreContents
       . extractSampleLine
-      . TEnc.decodeUtf8
-      $ body
+      $ html
   Right (map mkTestCase $ zipPairs pairs)
   where
     extractSampleLine :: T.Text -> [T.Text]
-    extractSampleLine html = getAllTextMatches (html =~ pattern) :: [T.Text]
+    extractSampleLine html' = getAllTextMatches (html' =~ pattern) :: [T.Text]
       where
         pattern :: T.Text
         pattern = "<h3>(入力例|出力例)[[:space:]]*[[:digit:]]+</h3>[[:space:]]*<pre>([[:print:][:space:]]*)[[:space:]]*</pre>"
