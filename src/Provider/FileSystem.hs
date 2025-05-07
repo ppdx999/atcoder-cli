@@ -1,6 +1,7 @@
 module Provider.FileSystem
   ( createDirectoryIO,
     getCurrentDirectoryIO,
+    readFileIO,
     saveFileIO,
   )
 where
@@ -29,6 +30,13 @@ createDirectoryIO path = do
 
 getCurrentDirectoryIO :: (MonadIO m) => m FilePath
 getCurrentDirectoryIO = liftIO Dir.getCurrentDirectory
+
+readFileIO :: FilePath -> IO (Either AppError BS.ByteString)
+readFileIO path =
+  try (BS.readFile path)
+    >>= either
+      (\e -> pure $ Left (ProviderError (T.pack $ show (e :: IOException))))
+      (pure . Right)
 
 -- ファイル保存の IO 実装
 saveFileIO :: (MonadIO m) => FilePath -> BS.ByteString -> m (Either AppError ())

@@ -11,7 +11,7 @@ import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import qualified Data.ByteString.Char8 as BSC
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO)
-import Provider.FileSystem (createDirectoryIO, getCurrentDirectoryIO, saveFileIO)
+import Provider.FileSystem (createDirectoryIO, getCurrentDirectoryIO, readFileIO, saveFileIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (reqGetIO)
 import Types (AppError)
@@ -24,6 +24,7 @@ instance HasFileSystem IO where
   createDirectory :: FilePath -> IO (Either AppError ())
   createDirectory = createDirectoryIO
   getCurrentDirectory = getCurrentDirectoryIO
+  readFile = readFileIO
   saveFile = saveFileIO
 
 instance HasAtcoder IO where
