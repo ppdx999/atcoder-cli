@@ -1,5 +1,6 @@
 -- test/Provider/AtcoderSpec.hs
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -14,14 +15,13 @@ import Control.Monad.State.Strict (MonadState, StateT (..), evalStateT, gets, mo
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as TEnc
 import Interface (MonadReq (..))
 import Provider.Atcoder
 import Test.Hspec
 import Types
 
 data MockReqState = MockReqState
-  { mockResponses :: Map.Map String (Either AppError BSC.ByteString),
+  { mockResponsesBody :: Map.Map String (Either AppError T.Text),
     mockLogs :: [T.Text]
   }
 
@@ -38,9 +38,9 @@ instance MonadThrow MockReq where
 
 instance MonadReq MockReq where
   getHtml url = do
-    responses <- gets mockResponses
+    responses <- gets mockResponsesBody
     case Map.lookup url responses of
-      Just response -> pure $ fmap TEnc.decodeUtf8 response
+      Just response -> pure response
       Nothing -> pure $ Left (ProviderError $ "MockReq: No response defined for URL: " <> T.pack url)
 
 evalMockReq :: MockReq a -> MockReqState -> a
@@ -57,22 +57,21 @@ spec = describe "Provider.Atcoder" $ do
       let url = "https://atcoder.jp/contests/abc100/tasks"
       -- AtCoder の実際の HTML 構造に近いダミーデータ (正規表現で抽出できる形式)
       let dummyHtml =
-            BSC.pack $
-              unlines
-                [ "<html><body>",
-                  "<h1>Tasks</h1>",
-                  "<table><tbody>",
-                  "<tr><td>A</td><td><a href='/contests/abc100/tasks/abc100_a'>Problem A</a></td></tr>",
-                  "<tr><td>B</td><td><a href='/contests/abc100/tasks/abc100_b'>Problem B</a></td></tr>",
-                  "<tr><td>C</td><td><a href='/contests/abc100/tasks/abc100_c'>Problem C</a></td></tr>",
-                  "</tbody></table>",
-                  "</body></html>"
-                ]
+            T.unlines
+              [ "<html><body>",
+                "<h1>Tasks</h1>",
+                "<table><tbody>",
+                "<tr><td>A</td><td><a href='/contests/abc100/tasks/abc100_a'>Problem A</a></td></tr>",
+                "<tr><td>B</td><td><a href='/contests/abc100/tasks/abc100_b'>Problem B</a></td></tr>",
+                "<tr><td>C</td><td><a href='/contests/abc100/tasks/abc100_c'>Problem C</a></td></tr>",
+                "</tbody></table>",
+                "</body></html>"
+              ]
       let responses = Map.singleton url (Right dummyHtml)
       let expected = Right [ProblemId "a", ProblemId "b", ProblemId "c"]
       let initialMockState =
             MockReqState
-              { mockResponses = responses,
+              { mockResponsesBody = responses,
                 mockLogs = []
               }
 
@@ -88,7 +87,7 @@ spec = describe "Provider.Atcoder" $ do
       let responses = Map.singleton url (Left expectedError)
       let initialMockState =
             MockReqState
-              { mockResponses = responses,
+              { mockResponsesBody = responses,
                 mockLogs = []
               }
 
@@ -105,28 +104,27 @@ spec = describe "Provider.Atcoder" $ do
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a" -- URLを修正
       -- parseTestCasesWithRegex' が期待する形式のHTML
       let dummyHtml =
-            TEnc.encodeUtf8 $
-              T.unlines
-                [ "<html><body>",
-                  "<h3>入力例 1</h3>",
-                  "<pre>1 2</pre>",
-                  "<h3>出力例 1</h3>",
-                  "<pre>3",
-                  "</pre>",
-                  "<h3>入力例 2</h3>",
-                  "<pre>10 20</pre>",
-                  "<h3>出力例 2</h3>",
-                  "<pre>30",
-                  "20",
-                  "</pre>",
-                  "</body></html>"
-                ]
+            T.unlines
+              [ "<html><body>",
+                "<h3>入力例 1</h3>",
+                "<pre>1 2</pre>",
+                "<h3>出力例 1</h3>",
+                "<pre>3",
+                "</pre>",
+                "<h3>入力例 2</h3>",
+                "<pre>10 20</pre>",
+                "<h3>出力例 2</h3>",
+                "<pre>30",
+                "20",
+                "</pre>",
+                "</body></html>"
+              ]
       let responses = Map.singleton url (Right dummyHtml)
       -- parseTestCasesWithRegex' が生成する TestCase (末尾に改行が追加される)
       let tc1 = TestCase {tcName = "1", tcInput = BSC.pack "1 2\n", tcOutput = BSC.pack "3\n"}
       let tc2 = TestCase {tcName = "2", tcInput = BSC.pack "10 20\n", tcOutput = BSC.pack "30\n20\n"}
       let expected = Right [tc1, tc2]
-      let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
+      let initialMockState = MockReqState {mockResponsesBody = responses, mockLogs = []}
 
       -- 2. Act
       let result = evalMockReq (fetchTestCasesIO testEnv task) initialMockState
@@ -141,7 +139,7 @@ spec = describe "Provider.Atcoder" $ do
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
       let expectedError = ProviderError "Simulated Network Error"
       let responses = Map.singleton url (Left expectedError)
-      let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
+      let initialMockState = MockReqState {mockResponsesBody = responses, mockLogs = []}
 
       -- 2. Act
       let result = evalMockReq (fetchTestCasesIO testEnv task) initialMockState
@@ -154,11 +152,11 @@ spec = describe "Provider.Atcoder" $ do
       let task = Task (ContestId "abc100") (ProblemId "a")
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
       -- サンプルが含まれないHTML
-      let dummyHtml = TEnc.encodeUtf8 "<html><body>No samples here</body></html>"
+      let dummyHtml = T.pack "<html><body>No samples here</body></html>"
       let responses = Map.singleton url (Right dummyHtml)
       -- parseTestCasesWithRegex' が空リストを返すことを期待
       let expected = Right []
-      let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
+      let initialMockState = MockReqState {mockResponsesBody = responses, mockLogs = []}
 
       -- 2. Act
       let result = evalMockReq (fetchTestCasesIO testEnv task) initialMockState
@@ -172,16 +170,15 @@ spec = describe "Provider.Atcoder" $ do
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
       -- 入力例しかないHTML
       let dummyHtml =
-            TEnc.encodeUtf8 $
-              T.unlines
-                [ "<html><body>",
-                  "<h3>入力例 1</h3>",
-                  "<pre>1 2</pre>",
-                  "</body></html>"
-                ]
+            T.unlines
+              [ "<html><body>",
+                "<h3>入力例 1</h3>",
+                "<pre>1 2</pre>",
+                "</body></html>"
+              ]
       let responses = Map.singleton url (Right dummyHtml)
       let expectedError = ProviderError "pairUp: odd length list" -- 仮のエラーメッセージ
-      let initialMockState = MockReqState {mockResponses = responses, mockLogs = []}
+      let initialMockState = MockReqState {mockResponsesBody = responses, mockLogs = []}
 
       -- 2. Act & Assert
       let result = evalMockReq (fetchTestCasesIO testEnv task) initialMockState

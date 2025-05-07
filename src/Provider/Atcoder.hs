@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -7,17 +8,20 @@
 module Provider.Atcoder
   ( fetchProblemIdsIO,
     fetchTestCasesIO,
+    verifySessionIO,
     AtCoderEnv (..),
     createAtCoderEnv,
   )
 where
 
+import Control.Monad.Except (ExceptT (ExceptT), runExceptT)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.List as List
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TEnc
 import qualified Data.Text.IO as TIO
 import Interface (MonadReq (..))
+import Network.HTTP.Req (HttpConfig (..), defaultHttpConfig, ignoreResponse, responseStatusCode)
 import Text.Regex.TDFA
 import Types
 
@@ -51,6 +55,23 @@ fetchTestCasesIO ::
 fetchTestCasesIO env task = do
   fetchProblemPage env task
     >>= either (pure . Left) parseTestCasesWithRegex
+
+verifySessionIO ::
+  (MonadIO m, MonadReq m) =>
+  AtCoderEnv ->
+  Session ->
+  m (Either AppError Bool)
+verifySessionIO _env session = runExceptT $ do
+  liftIO $ TIO.putStrLn "Verifying session with AtCoder..."
+  let url = "https://atcoder.jp/settings"
+  let config =
+        defaultHttpConfig
+          { httpConfigRedirectCount = 0
+          }
+
+  res <- ExceptT $ reqGetWithSession session url ignoreResponse config mempty
+
+  pure $ responseStatusCode res == 200
 
 -- --- Page Fetching Helpers ---
 fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError T.Text)
