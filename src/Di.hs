@@ -1,6 +1,5 @@
 -- src/App/Setup.hs
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 -- Orphan instance warning を抑制
 {-# OPTIONS_GHC -Wno-orphans #-}
@@ -10,7 +9,7 @@ module Di (runAppM) where
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
-import Provider.Config (loadConfigIO, loadSessionPathIO)
+import Provider.Config (loadSessionPathIO)
 import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readFileIO, saveFileIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
@@ -32,7 +31,6 @@ instance HasFileSystem IO where
   doesFileExist = doesFileExistIO
 
 instance HasConfig IO where
-  loadConfig = loadConfigIO
   loadSessionPath = loadSessionPathIO
 
 instance HasAtcoder IO where

@@ -14,7 +14,6 @@ module Types
     SubmissionId (..),
     SubmissionState (..),
     Submission (..),
-    Config (..),
     AppError (..),
   )
 where
@@ -81,11 +80,6 @@ data Submission = Submission
     submTimestamp :: UTCTime
   }
   deriving (Eq, Show)
-
--- | Configuration
-data Config = Config
-  { sessionPath :: FilePath
-  }
 
 -- | Types-layer errors
 data AppError

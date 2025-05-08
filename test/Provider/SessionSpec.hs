@@ -7,7 +7,7 @@ import qualified Data.Set as Set
 import Mock (MockState (..), execMockApp, initialMockState)
 import Provider.Session (loadSessionIO, saveSessionIO)
 import Test.Hspec (Spec, describe, it, shouldBe)
-import Types (AppError (InvalidSession, ProviderError, SessionNotFound), Config (..), Session (Session))
+import Types (AppError (InvalidSession, ProviderError, SessionNotFound), Session (Session))
 
 spec :: Spec
 spec = describe "Provider.Sesseion" $ do
@@ -49,7 +49,7 @@ spec = describe "Provider.Sesseion" $ do
       let initState =
             initialMockState
               { msCreateDirIfMissing = \_ _ -> Right (),
-                msConfig = Right $ Config {sessionPath = "/mock/session.txt"}
+                msSessionPath = Right "/mock/session.txt"
               }
       (result, finalState) <- execMockApp (saveSessionIO (Session "a session")) initState
       result `shouldBe` Right ()
@@ -61,7 +61,7 @@ spec = describe "Provider.Sesseion" $ do
       let initState =
             initialMockState
               { msCreateDirIfMissing = \_ _ -> Right (),
-                msConfig = Right $ Config {sessionPath = "/unexist/dirs/session.txt"}
+                msSessionPath = Right "/unexist/dirs/session.txt"
               }
       (result, finalState) <- execMockApp (saveSessionIO (Session "a session")) initState
       result `shouldBe` Right ()
