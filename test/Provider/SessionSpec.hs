@@ -2,10 +2,12 @@
 
 module Provider.SessionSpec (spec) where
 
+import qualified Data.Map as Map
+import qualified Data.Set as Set
 import Mock (MockState (..), execMockApp, initialMockState)
 import Provider.Session (loadSessionIO, saveSessionIO)
 import Test.Hspec (Spec, describe, it, shouldBe)
-import Types (AppError (InvalidSession, ProviderError, SessionNotFound), Session (Session))
+import Types (AppError (InvalidSession, ProviderError, SessionNotFound), Config (..), Session (Session))
 
 spec :: Spec
 spec = describe "Provider.Sesseion" $ do
@@ -44,15 +46,25 @@ spec = describe "Provider.Sesseion" $ do
 
   describe "saveSession" $ do
     it "正常系" $ do
-      let initState = initialMockState {msCreateDirIfMissing = \_ _ -> Right ()}
-      let session = Session "a session"
-      (result, _finalState) <- execMockApp (saveSessionIO session) initState
-      -- TODO: finalStateの検証
+      let initState =
+            initialMockState
+              { msCreateDirIfMissing = \_ _ -> Right (),
+                msConfig = Right $ Config {sessionPath = "/mock/session.txt"}
+              }
+      (result, finalState) <- execMockApp (saveSessionIO (Session "a session")) initState
       result `shouldBe` Right ()
 
+      msCreatedDirs finalState `shouldBe` Set.singleton "/mock"
+      msSavedFiles finalState `shouldBe` Map.singleton "/mock/session.txt" "a session"
+
     it "Sessionファイルの親ディレクトリが存在しない場合、ディレクトリを作成してからSessionファイルを作る" $ do
-      let initState = initialMockState {msCreateDirIfMissing = \_ _ -> Right ()}
-      let session = Session "a session"
-      (result, _finalState) <- execMockApp (saveSessionIO session) initState
-      -- TODO: finalStateの検証
+      let initState =
+            initialMockState
+              { msCreateDirIfMissing = \_ _ -> Right (),
+                msConfig = Right $ Config {sessionPath = "/unexist/dirs/session.txt"}
+              }
+      (result, finalState) <- execMockApp (saveSessionIO (Session "a session")) initState
       result `shouldBe` Right ()
+
+      msCreatedDirs finalState `shouldBe` Set.singleton "/unexist/dirs"
+      msSavedFiles finalState `shouldBe` Map.singleton "/unexist/dirs/session.txt" "a session"

@@ -34,6 +34,7 @@ library
       Provider.Atcoder
       Provider.Session
   other-modules:
+      Provider.Config
       Provider.FileSystem
       Provider.Logger
       Provider.Req

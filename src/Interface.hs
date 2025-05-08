@@ -4,6 +4,7 @@
 module Interface
   ( HasAtcoder (..),
     HasFileSystem (..),
+    HasConfig (..),
     HasLogger (..),
     MonadReq (..),
     HasStdin (..),
@@ -35,6 +36,10 @@ class (Monad m, MonadThrow m) => HasFileSystem m where
   readFile :: FilePath -> m (Either AppError ByteString)
   saveFile :: FilePath -> ByteString -> m (Either AppError ())
   doesFileExist :: FilePath -> m Bool
+
+class (Monad m) => HasConfig m where
+  loadConfig :: m (Either AppError Config)
+  loadSessionPath :: m (Either AppError FilePath)
 
 class (Monad m) => HasSession m where
   loadSession :: m (Either AppError Session)

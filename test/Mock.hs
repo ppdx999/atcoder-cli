@@ -38,7 +38,7 @@ data MockState = MockState
     msSaveFileResult :: FilePath -> ByteString -> Either AppError (),
     msSavedFiles :: Map FilePath ByteString,
     msStdinQueue :: [Text],
-    msConfig :: Config,
+    msConfig :: Either AppError Config,
     msLoadSessionResult :: Either AppError Session,
     msSaveSessionResult :: Session -> Either AppError (),
     msSavedSessions :: [Session],
@@ -61,7 +61,7 @@ initialMockState =
       msSaveFileResult = \_ _ -> Right (),
       msSavedFiles = Map.empty,
       msStdinQueue = [],
-      msConfig = Config {sessionPath = "/mock/session.txt"},
+      msConfig = Right $ Config {sessionPath = "/mock/session.txt"},
       msLoadSessionResult = Left SessionNotFound,
       msSaveSessionResult = \_ -> Right (),
       msSavedSessions = [],
@@ -118,6 +118,10 @@ instance HasFileSystem MockApp where
         modify $ \s -> s {msSavedFiles = Map.insert path content (msSavedFiles s)}
         pure $ Right ()
       Left err -> pure $ Left err
+
+instance HasConfig MockApp where
+  loadConfig = gets msConfig
+  loadSessionPath = fmap (fmap sessionPath) loadConfig
 
 instance HasSession MockApp where
   loadSession = gets msLoadSessionResult
