@@ -71,7 +71,9 @@ verifySessionIO _env session = runExceptT $ do
 
   res <- ExceptT $ reqGetWithSession session url ignoreResponse config mempty
 
-  pure $ responseStatusCode res == 200
+  let statusCode = responseStatusCode res
+  liftIO $ TIO.putStrLn $ "Response Status Code: " <> T.pack (show statusCode)
+  pure $ statusCode == 200
 
 -- --- Page Fetching Helpers ---
 fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError T.Text)
