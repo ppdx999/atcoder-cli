@@ -21,7 +21,7 @@ createDirectoryIfMissingIO :: Bool -> FilePath -> IO (Either AppError ())
 createDirectoryIfMissingIO missing path = try (Dir.createDirectoryIfMissing missing path)
 
 getCurrentDirectoryIO :: IO FilePath
-getCurrentDirectoryIO = liftIO Dir.getCurrentDirectory
+getCurrentDirectoryIO = Dir.getCurrentDirectory
 
 readFileIO :: FilePath -> IO (Either AppError BS.ByteString)
 readFileIO path = try (BS.readFile path)
