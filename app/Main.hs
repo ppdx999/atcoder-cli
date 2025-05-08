@@ -13,6 +13,7 @@ import System.IO (stderr)
 import Types (AppError (ProviderError), validateContestId)
 import Usecase.Download (download)
 import Usecase.Init (initContest)
+import Usecase.Login (login)
 
 main :: IO ()
 main = do
@@ -26,6 +27,7 @@ runMain ["init", contestIdStr] = do
   contestId <- liftEither $ validateContestId contestIdStr
   initContest contestId
 runMain ["download"] = download
+runMain ["login"] = login
 runMain _ =
   throwE $ ProviderError "Invalid arguments: Usage: atcli <contest-id>"
 
