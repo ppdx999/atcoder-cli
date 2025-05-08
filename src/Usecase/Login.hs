@@ -37,6 +37,7 @@ login = do
     doLogin :: (HasStdin m, HasLogger m, HasSession m, HasAtcoder m) => ExceptT AppError m ()
     doLogin = do
       logInfoE "Ask Session via stdin"
+      logInfoE "ブラウザでAtcoderにログインしてREVEL_SESSIONを入力してください"
       session <- ExceptT askSession
 
       logInfoE "Verify Session..."
