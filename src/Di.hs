@@ -14,6 +14,7 @@ import Provider.FileSystem (createDirectoryIO, getCurrentDirectoryIO, readFileIO
 import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (getHtmlIO, reqGetIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
+import Provider.Stdin (readLineIO)
 import Types (AppError)
 
 instance HasLogger IO where
@@ -40,6 +41,9 @@ instance MonadReq IO where
   reqGet = reqGetIO
   reqGetWithSession = reqGetWithSession
   getHtml = getHtmlIO
+
+instance HasStdin IO where
+  readLine = readLineIO
 
 runAppM :: ExceptT AppError IO a -> IO (Either AppError a)
 runAppM = runExceptT
