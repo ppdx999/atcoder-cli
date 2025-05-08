@@ -24,6 +24,7 @@ login = do
   session <- lift loadSession
   case session of
     Left SessionNotFound -> doLogin
+    Left (InvalidSession _) -> doLogin
     Left e -> ExceptT $ return $ Left e
     Right s -> do
       logInfoE "Verify Session..."
