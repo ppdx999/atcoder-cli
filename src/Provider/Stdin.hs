@@ -1,6 +1,6 @@
 module Provider.Stdin (readLineIO) where
 
-import Data.Text (Text)
+import Data.Text (Text, pack)
 
 readLineIO :: IO Text
-readLineIO = readLn
+readLineIO = fmap pack getLine
