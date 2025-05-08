@@ -32,11 +32,11 @@ library
       Usecase.Download
       Usecase.Login
       Provider.Atcoder
+      Provider.Session
   other-modules:
       Provider.FileSystem
       Provider.Logger
       Provider.Req
-      Provider.Session
       Provider.Stdin
       Provider.User
       Provider.Utils
@@ -90,6 +90,7 @@ test-suite atcli-test
   other-modules:
       Mock
       Provider.AtcoderSpec
+      Provider.SessionSpec
       TypesSpec
       Usecase.DownloadSpec
       Usecase.InitSpec

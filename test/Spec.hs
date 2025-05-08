@@ -3,6 +3,7 @@
 module Main (main) where
 
 import Provider.AtcoderSpec qualified
+import Provider.SessionSpec qualified
 import Test.Hspec
 import TypesSpec qualified
 import Usecase.DownloadSpec qualified
@@ -16,3 +17,4 @@ main = hspec $ do
   describe "Usecase.Download" Usecase.DownloadSpec.spec
   describe "Usecase.Login" Usecase.LoginSpec.spec
   describe "Provider.Atcoder" Provider.AtcoderSpec.spec
+  describe "Provider.Session" Provider.SessionSpec.spec
