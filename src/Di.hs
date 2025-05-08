@@ -10,9 +10,9 @@ module Di (runAppM) where
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
-import Provider.FileSystem (createDirectoryIO, getCurrentDirectoryIO, readFileIO, saveFileIO)
+import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readFileIO, saveFileIO)
 import Provider.Logger (logErrorIO, logInfoIO)
-import Provider.Req (getHtmlIO, reqGetIO)
+import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
 import Provider.Stdin (readLineIO)
 import Types (AppError)
@@ -22,11 +22,12 @@ instance HasLogger IO where
   logError = logErrorIO
 
 instance HasFileSystem IO where
-  createDirectory :: FilePath -> IO (Either AppError ())
   createDirectory = createDirectoryIO
+  createDirectoryIfMissing = createDirectoryIfMissingIO
   getCurrentDirectory = getCurrentDirectoryIO
   readFile = readFileIO
   saveFile = saveFileIO
+  doesFileExist = doesFileExistIO
 
 instance HasAtcoder IO where
   fetchProblemIds = fetchProblemIdsIO AtCoderEnv
@@ -39,7 +40,7 @@ instance HasSession IO where
 
 instance MonadReq IO where
   reqGet = reqGetIO
-  reqGetWithSession = reqGetWithSession
+  reqGetWithSession = reqGetWithSessionIO
   getHtml = getHtmlIO
 
 instance HasStdin IO where
