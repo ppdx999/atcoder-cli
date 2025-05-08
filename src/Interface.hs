@@ -29,9 +29,11 @@ class (Monad m) => HasLogger m where
 
 class (Monad m, MonadThrow m) => HasFileSystem m where
   createDirectory :: FilePath -> m (Either AppError ())
+  createDirectoryIfMissing :: Bool -> FilePath -> m (Either AppError ())
   getCurrentDirectory :: m FilePath
   readFile :: FilePath -> m (Either AppError ByteString)
   saveFile :: FilePath -> ByteString -> m (Either AppError ())
+  doesFileExist :: FilePath -> m Bool
 
 class (Monad m) => HasSession m where
   loadSession :: m (Either AppError Session)
