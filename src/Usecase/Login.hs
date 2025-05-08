@@ -15,7 +15,8 @@ login ::
     HasLogger m,
     HasStdin m,
     HasAtcoder m,
-    HasSession m
+    HasSession m,
+    HasUser m
   ) =>
   ExceptT AppError m ()
 login = do
@@ -29,15 +30,15 @@ login = do
       isValid <- ExceptT (verifySession s)
 
       if isValid
-        then logInfoE "すでにログインしています"
+        then sendMsgE "すでにログインしています"
         else do
-          logInfoE "現在保存されているセッション情報は古いため再度ログインを実行します..."
+          sendMsgE "現在保存されているセッション情報は古いため再度ログインを実行します..."
           doLogin
   where
-    doLogin :: (HasStdin m, HasLogger m, HasSession m, HasAtcoder m) => ExceptT AppError m ()
+    doLogin :: (HasStdin m, HasUser m, HasLogger m, HasSession m, HasAtcoder m) => ExceptT AppError m ()
     doLogin = do
       logInfoE "Ask Session via stdin"
-      logInfoE "ブラウザでAtcoderにログインしてREVEL_SESSIONを入力してください"
+      sendMsgE "ブラウザでAtcoderにログインしてREVEL_SESSIONを入力してください"
       session <- ExceptT askSession
 
       logInfoE "Verify Session..."
@@ -47,11 +48,14 @@ login = do
       when isValid $ ExceptT (saveSession session)
 
       if isValid
-        then logInfoE "ログインに成功しました"
-        else logInfoE "ログインに失敗しました"
+        then sendMsgE "ログインに成功しました"
+        else sendMsgE "ログインに失敗しました"
 
     logInfoE :: (HasLogger m, MonadTrans t) => T.Text -> t m ()
     logInfoE = lift . logInfo
+
+    sendMsgE :: (HasUser m, MonadTrans t) => T.Text -> t m ()
+    sendMsgE = lift . sendMsg
 
     askSession :: (HasStdin m) => m (Either AppError Session)
     askSession = validateSession <$> readLine

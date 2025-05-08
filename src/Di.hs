@@ -15,6 +15,7 @@ import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
 import Provider.Stdin (readLineIO)
+import Provider.User (sendMsgIO)
 import Types (AppError)
 
 instance HasLogger IO where
@@ -45,6 +46,9 @@ instance MonadReq IO where
 
 instance HasStdin IO where
   readLine = readLineIO
+
+instance HasUser IO where
+  sendMsg = sendMsgIO
 
 runAppM :: ExceptT AppError IO a -> IO (Either AppError a)
 runAppM = runExceptT

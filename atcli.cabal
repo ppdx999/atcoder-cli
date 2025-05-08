@@ -38,6 +38,7 @@ library
       Provider.Req
       Provider.Session
       Provider.Stdin
+      Provider.User
       Provider.Utils
       Paths_atcli
   hs-source-dirs:

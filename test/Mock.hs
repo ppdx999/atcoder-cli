@@ -26,9 +26,12 @@ import Types
 
 data MockState = MockState
   { msLogs :: [Text],
+    msMsgs :: [Text],
     msCreatedDirs :: Set FilePath,
     msProblemIdsResult :: Either AppError [ProblemId],
     msCreateDirResult :: FilePath -> Either AppError (),
+    msCreateDirIfMissing :: Bool -> FilePath -> Either AppError (),
+    msDoesFileExistQueue :: [Bool],
     msCurrentDir :: FilePath,
     msTestCasesResult :: Either AppError [TestCase],
     msReadFiles :: Either AppError ByteString,
@@ -46,9 +49,12 @@ initialMockState :: MockState
 initialMockState =
   MockState
     { msLogs = [],
+      msMsgs = [],
       msCreatedDirs = Set.empty,
       msProblemIdsResult = Right [],
       msCreateDirResult = \_ -> Right (),
+      msCreateDirIfMissing = \_ _ -> Right (),
+      msDoesFileExistQueue = [True],
       msCurrentDir = "/tmp/abc100/a",
       msTestCasesResult = Right [],
       msReadFiles = Right "fileData",
@@ -87,6 +93,22 @@ instance HasFileSystem MockApp where
         modify $ \s -> s {msCreatedDirs = Set.insert path (msCreatedDirs s)}
         pure $ Right ()
       Left err -> pure $ Left err
+
+  createDirectoryIfMissing missing path = do
+    resultFunc <- gets msCreateDirIfMissing
+    case resultFunc missing path of
+      Right () -> do
+        modify $ \s -> s {msCreatedDirs = Set.insert path (msCreatedDirs s)}
+        pure $ Right ()
+      Left err -> pure $ Left err
+
+  doesFileExist _path = do
+    queue <- gets msDoesFileExistQueue
+    case queue of
+      [] -> error "MockApp: doesFileExist called on empty queue"
+      (x : xs) -> do
+        modify $ \s -> s {msDoesFileExistQueue = xs}
+        pure x
   getCurrentDirectory = gets msCurrentDir
   readFile _filePath = gets msReadFiles
   saveFile path content = do
@@ -126,3 +148,6 @@ instance HasStdin MockApp where
       (x : xs) -> do
         modify $ \s -> s {msStdinQueue = xs}
         pure x
+
+instance HasUser MockApp where
+  sendMsg msg = modify $ \s -> s {msMsgs = msMsgs s ++ [msg]}

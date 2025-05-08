@@ -8,6 +8,7 @@ module Interface
     MonadReq (..),
     HasStdin (..),
     HasSession (..),
+    HasUser (..),
   )
 where
 
@@ -64,3 +65,6 @@ class (Monad m) => MonadReq m where
 
 class (Monad m) => HasStdin m where
   readLine :: m Text
+
+class (Monad m) => HasUser m where
+  sendMsg :: Text -> m ()
