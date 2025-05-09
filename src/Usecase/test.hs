@@ -14,8 +14,10 @@ test ::
   m (Either AppError ())
 test = runExceptT $ do
   lang <- ExceptT detectLanguage
+  ExceptT $ buildLanguage lang
   tcs <- ExceptT loadTestCases
   traverse_ (ExceptT . runAndReport lang) tcs
+  ExceptT $ cleanupBuildFile lang
   where
     runAndReport :: (HasLanguage m, HasReporter m) => Language -> TestCase -> m (Either AppError ())
     runAndReport lang tc =

@@ -6,9 +6,10 @@ module Types
     ProblemId (..),
     validateProblemId,
     Task (..),
-    LangName (..),
-    SourceFile (..),
     Language (..),
+    Cmd (..),
+    Stdin (..),
+    Stdout (..),
     RunTestCaseResult (..),
     Session (..),
     validateSession,
@@ -39,13 +40,6 @@ data Task = Task
   }
   deriving (Eq, Ord, Show)
 
-newtype LangName = LangName T.Text
-  deriving (Eq, Ord, Show)
-
--- | Source file path (e.g., "./main.cpp")
-newtype SourceFile = SourceFile String
-  deriving (Eq, Ord, Show)
-
 newtype RunTestCaseResult = RunTestCaseResult ByteString
   deriving (Eq, Ord, Show)
 
@@ -62,9 +56,21 @@ data TestCase = TestCase
   deriving (Eq, Show)
 
 data Language = Language
-  { langName :: LangName,
-    sourceFile :: SourceFile
+  { langName :: T.Text,
+    sourceFile :: String,
+    buildCmd :: Maybe Cmd,
+    builtFile :: Maybe FilePath,
+    runCmd :: Cmd
   }
+  deriving (Eq, Ord, Show)
+
+newtype Cmd = Cmd [String]
+  deriving (Eq, Ord, Show)
+
+newtype Stdin = Stdin ByteString
+  deriving (Eq, Ord, Show)
+
+newtype Stdout = Stdout ByteString
   deriving (Eq, Ord, Show)
 
 -- | Submission ID
