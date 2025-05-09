@@ -11,21 +11,24 @@ import Control.Monad.Trans.Except (ExceptT (..))
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
 import Interface
-import System.FilePath (pathSeparator, takeBaseName, takeDirectory, (</>))
+import System.FilePath ((</>))
 import Types
 
 download ::
   ( HasLogger m,
     HasFileSystem m,
-    HasAtcoder m
+    HasAtcoder m,
+    HasConfig m
   ) =>
   ExceptT AppError m ()
 download = do
   logInfoE "Starting download..."
 
-  -- 1. カレントディレクトリから Task を取得
-  currentDir <- lift getCurrentDirectory
-  task@(Task (ContestId cid) (ProblemId pid)) <- ExceptT $ pure $ parseTaskFromPath currentDir
+  task@( Task
+           (ContestId cid)
+           (ProblemId pid)
+         ) <-
+    ExceptT loadTask
   logInfoE $ "Target: Contest=" <> cid <> ", Problem=" <> pid
 
   -- 2. テストケースを取得
@@ -34,6 +37,7 @@ download = do
   logInfoE $ "Found " <> T.pack (show $ length testCases) <> " test cases."
 
   -- 3. 各テストケースを保存
+  currentDir <- lift getCurrentDirectory
   let testDir = currentDir </> "test" -- 保存先ディレクトリ
   logInfoE $ "Saving test cases to " <> T.pack testDir <> " ..."
 
@@ -65,32 +69,6 @@ download = do
 
       lift $ logInfo $ "Saving " <> T.pack outFile
       ExceptT $ saveFile outFile (tcOutput testCase)
-
-    -- \| Parses ContestId and ProblemId from the last two directory components of a FilePath.
-    -- Example: "/path/to/abc100/a/" -> Right Task { taskContestId = "abc100", taskProblemId = "a" }
-    parseTaskFromPath :: FilePath -> Either AppError Task
-    parseTaskFromPath fp = do
-      let normalizedPath = dropTrailingSeparator fp
-      let problemIdStr = takeBaseName normalizedPath
-      let contestIdStr = takeBaseName (takeDirectory normalizedPath)
-
-      if null contestIdStr || null problemIdStr
-        then Left (ProviderError ("Could not parse contest/problem ID from path: " <> T.pack fp))
-        else do
-          contestId <- validateContestId (T.pack contestIdStr)
-          problemId <- validateProblemId (T.pack problemIdStr)
-          pure Task {taskContestId = contestId, taskProblemId = problemId}
-
-    -- \| Helper to remove trailing path separator if present.
-    dropTrailingSeparator :: FilePath -> FilePath
-    dropTrailingSeparator p =
-      if isTrailingSeparator p && length p > 1
-        then take (length p - 1) p
-        else p
-      where
-        isTrailingSeparator path = case reverse path of
-          (c : _) -> c == pathSeparator
-          [] -> False
 
     logInfoE :: (HasLogger m, MonadTrans t) => T.Text -> t m ()
     logInfoE = lift . logInfo

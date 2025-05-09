@@ -37,6 +37,7 @@ spec = describe "Usecase.Download.download" $ do
     let initialState =
           initialMockState
             { msCurrentDir = currentDir,
+              msTask = Right $ Task (ContestId "abc100") (ProblemId "a"),
               msTestCasesResult = Right testCases
             }
     (result, finalState) <- execMockApp (runExceptT download) initialState
@@ -68,16 +69,14 @@ spec = describe "Usecase.Download.download" $ do
           (tc2OutPath, tc2Output)
         ]
 
-  it "異常系: カレントディレクトリのパス解析に失敗した場合" $ do
+  it "異常系: タスクの取得に失敗した場合" $ do
     let invalidDir = "/path_to_only_one_component"
-    let initialState = initialMockState {msCurrentDir = invalidDir}
+    let task = Left (ProviderError "Invalid directory")
+    let initialState = initialMockState {msCurrentDir = invalidDir, msTask = task}
     (result, finalState) <- execMockApp (runExceptT download) initialState
 
     -- 結果の検証 (parseTaskFromPath が返すエラー)
-    result `shouldSatisfy` (\r -> case r of Left (ProviderError msg) -> "Could not parse" `T.isInfixOf` msg; _ -> False)
-
-    -- ログの検証
-    msLogs finalState `shouldBe` ["Starting download..."]
+    result `shouldBe` task
 
     -- ディレクトリやファイルが作成/保存されていないこと
     msCreatedDirs finalState `shouldBe` Set.empty

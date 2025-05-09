@@ -33,8 +33,8 @@ library
       Usecase.Login
       Provider.Atcoder
       Provider.Session
-  other-modules:
       Provider.Config
+  other-modules:
       Provider.FileSystem
       Provider.Logger
       Provider.Req
@@ -91,6 +91,7 @@ test-suite atcli-test
   other-modules:
       Mock
       Provider.AtcoderSpec
+      Provider.ConfigSpec
       Provider.SessionSpec
       TypesSpec
       Usecase.DownloadSpec

@@ -39,6 +39,7 @@ class (Monad m, MonadThrow m) => HasFileSystem m where
 
 class (Monad m) => HasConfig m where
   loadSessionPath :: m (Either AppError FilePath)
+  loadTask :: m (Either AppError Task)
 
 class (Monad m) => HasSession m where
   loadSession :: m (Either AppError Session)

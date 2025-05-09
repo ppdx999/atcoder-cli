@@ -47,6 +47,7 @@ library:
     - Usecase.Login
     - Provider.Atcoder
     - Provider.Session
+    - Provider.Config
 
 executables:
   atcli:
