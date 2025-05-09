@@ -57,9 +57,10 @@ class (Monad m) => HasTestCase m where
 
 class (Monad m) => HasLanguage m where
   detectLanguage :: m (Either AppError Language)
+  runTestCase :: Language -> TestCase -> m (Either AppError RunTestCaseResult)
 
 class (Monad m) => HasExecutor m where
-  runTestCase :: Language -> TestCase -> m (Either AppError RunTestCaseResult)
+  executeCmd :: Cmd -> Stdin -> m (Either AppError Stdout)
 
 class (Monad m) => HasReporter m where
   report :: TestCase -> RunTestCaseResult -> m (Either AppError ())
