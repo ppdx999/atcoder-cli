@@ -59,7 +59,7 @@ class (Monad m) => HasLanguage m where
   detectLanguage :: m (Either AppError Language)
   buildLanguage :: Language -> m (Either AppError ())
   runTestCase :: Language -> TestCase -> m (Either AppError RunTestCaseResult)
-  cleanupBuildFile :: Language -> m (Either AppError ())
+  cleanupBuiltFile :: Language -> m (Either AppError ())
 
 class (Monad m) => HasExecutor m where
   executeCmd :: Cmd -> Stdin -> m (Either AppError Stdout)
