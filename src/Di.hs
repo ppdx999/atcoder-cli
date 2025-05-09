@@ -10,7 +10,7 @@ import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
-import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readFileIO, saveFileIO)
+import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, saveFileIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
@@ -29,6 +29,7 @@ instance HasFileSystem IO where
   getCurrentDirectory = getCurrentDirectoryIO
   readFile = readFileIO
   saveFile = saveFileIO
+  readDir = readDirIO
   doesFileExist = doesFileExistIO
 
 instance HasConfig IO where

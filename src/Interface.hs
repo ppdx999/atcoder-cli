@@ -39,6 +39,7 @@ class (Monad m, MonadThrow m) => HasFileSystem m where
   getCurrentDirectory :: m FilePath
   readFile :: FilePath -> m (Either AppError ByteString)
   saveFile :: FilePath -> ByteString -> m (Either AppError ())
+  readDir :: FilePath -> m (Either AppError [FilePath])
   doesFileExist :: FilePath -> m Bool
 
 class (Monad m) => HasConfig m where
