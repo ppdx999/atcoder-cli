@@ -38,6 +38,7 @@ class (Monad m, MonadThrow m) => HasFileSystem m where
   doesFileExist :: FilePath -> m Bool
 
 class (Monad m) => HasConfig m where
+  loadTestDir :: m (Either AppError FilePath)
   loadSessionPath :: m (Either AppError FilePath)
   loadTask :: m (Either AppError Task)
 

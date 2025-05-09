@@ -37,8 +37,7 @@ download = do
   logInfoE $ "Found " <> T.pack (show $ length testCases) <> " test cases."
 
   -- 3. 各テストケースを保存
-  currentDir <- lift getCurrentDirectory
-  let testDir = currentDir </> "test" -- 保存先ディレクトリ
+  testDir <- ExceptT loadTestDir
   logInfoE $ "Saving test cases to " <> T.pack testDir <> " ..."
 
   -- ./test ディレクトリを作成 (存在していてもエラーにならないようにする)

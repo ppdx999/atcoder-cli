@@ -39,6 +39,7 @@ data MockState = MockState
     msSavedFiles :: Map FilePath ByteString,
     msStdinQueue :: [Text],
     msSessionPath :: Either AppError FilePath,
+    msTestDir :: Either AppError FilePath,
     msTask :: Either AppError Task,
     msLoadSessionResult :: Either AppError Session,
     msSaveSessionResult :: Session -> Either AppError (),
@@ -63,6 +64,7 @@ initialMockState =
       msSavedFiles = Map.empty,
       msStdinQueue = [],
       msSessionPath = Right "/tmp/session.txt",
+      msTestDir = Right "/tmp/abc100/a/test",
       msTask = Right (Task (ContestId "abc100") (ProblemId "a")),
       msLoadSessionResult = Left SessionNotFound,
       msSaveSessionResult = \_ -> Right (),
@@ -123,6 +125,7 @@ instance HasFileSystem MockApp where
 
 instance HasConfig MockApp where
   loadSessionPath = gets msSessionPath
+  loadTestDir = gets msTestDir
   loadTask = gets msTask
 
 instance HasSession MockApp where

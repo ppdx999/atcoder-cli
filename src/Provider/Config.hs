@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Provider.Config (loadSessionPathIO, loadTaskIO) where
+module Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO) where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import qualified Data.Text as T
@@ -41,6 +41,11 @@ loadTaskIO = do
         isTrailingSeparator path = case reverse path of
           (c : _) -> c == pathSeparator
           [] -> False
+
+loadTestDirIO :: (MonadIO m, HasFileSystem m) => m (Either AppError FilePath)
+loadTestDirIO = do
+  currentDir <- getCurrentDirectory
+  return $ Right (currentDir </> "test")
 
 sessionFilePathIO :: IO FilePath
 sessionFilePathIO = do
