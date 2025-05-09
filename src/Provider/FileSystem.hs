@@ -4,6 +4,7 @@ module Provider.FileSystem
     getCurrentDirectoryIO,
     readFileIO,
     saveFileIO,
+    removeFileIO,
     readDirIO,
     doesFileExistIO,
   )
@@ -29,6 +30,9 @@ readFileIO path = try (BS.readFile path)
 
 saveFileIO :: FilePath -> BS.ByteString -> IO (Either AppError ())
 saveFileIO path content = try (BS.writeFile path content)
+
+removeFileIO :: FilePath -> IO (Either AppError ())
+removeFileIO = try . Dir.removeFile
 
 readDirIO :: FilePath -> IO (Either AppError [FilePath])
 readDirIO path = try (Dir.getDirectoryContents path)

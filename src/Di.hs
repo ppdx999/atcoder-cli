@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 -- Orphan instance warning を抑制
 {-# OPTIONS_GHC -Wno-orphans #-}
 
@@ -11,15 +12,15 @@ import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
-import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, saveFileIO)
-import Provider.Language (detectLanguageIO)
+import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, removeFileIO, saveFileIO)
+import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
 import Provider.Stdin (readLineIO)
 import Provider.TestCase (saveTestCaseIO)
 import Provider.User (sendMsgIO)
-import Types (AppError)
+import Types (AppError, Stdout (..))
 
 instance HasLogger IO where
   logInfo = logInfoIO
@@ -31,6 +32,7 @@ instance HasFileSystem IO where
   getCurrentDirectory = getCurrentDirectoryIO
   readFile = readFileIO
   saveFile = saveFileIO
+  removeFile = removeFileIO
   readDir = readDirIO
   doesFileExist = doesFileExistIO
 
@@ -53,6 +55,12 @@ instance HasSession IO where
 
 instance HasLanguage IO where
   detectLanguage = detectLanguageIO
+  buildLanguage = buildLanguageIO
+  cleanupBuiltFile = cleanupBuiltFileIO
+
+instance HasExecutor IO where
+  -- 仮実装
+  executeCmd _ _ = return $ Right (Stdout "")
 
 instance MonadReq IO where
   reqGet = reqGetIO

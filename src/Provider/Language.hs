@@ -11,12 +11,15 @@ module Provider.Language
     rust,
     zig,
     langs,
+    buildLanguageIO,
+    cleanupBuiltFileIO,
   )
 where
 
 import Control.Monad.Trans.Except (ExceptT (ExceptT), runExceptT)
 import Data.Functor ((<&>))
 import Data.Maybe (catMaybes, listToMaybe)
+import qualified Data.Text.Encoding as TEnc
 import Interface
 import System.FilePath (takeFileName)
 import Types
@@ -24,57 +27,81 @@ import Types
 c :: Language
 c =
   Language
-    { langName = LangName "c",
-      sourceFile = SourceFile "main.c"
+    { langName = "c",
+      sourceFile = "main.c",
+      buildCmd = Just (Cmd ["gcc", "-o", "main", "main.c"]),
+      builtFile = Just "main",
+      runCmd = Cmd ["./main"]
     }
 
 cpp :: Language
 cpp =
   Language
-    { langName = LangName "cpp",
-      sourceFile = SourceFile "main.cpp"
+    { langName = "cpp",
+      sourceFile = "main.cpp",
+      buildCmd = Just (Cmd ["g++", "-o", "main", "main.cpp"]),
+      builtFile = Just "main",
+      runCmd = Cmd ["./main"]
     }
 
 python :: Language
 python =
   Language
-    { langName = LangName "python",
-      sourceFile = SourceFile "main.py"
+    { langName = "python",
+      sourceFile = "main.py",
+      buildCmd = Nothing,
+      builtFile = Nothing,
+      runCmd = Cmd ["python", "main.py"]
     }
 
 java :: Language
 java =
   Language
-    { langName = LangName "java",
-      sourceFile = SourceFile "Main.java"
+    { langName = "java",
+      sourceFile = "Main.java",
+      buildCmd = Just (Cmd ["javac", "Main.java"]),
+      builtFile = Just "Main",
+      runCmd = Cmd ["java", "Main"]
     }
 
 haskell :: Language
 haskell =
   Language
-    { langName = LangName "haskell",
-      sourceFile = SourceFile "Main.hs"
+    { langName = "haskell",
+      sourceFile = "Main.hs",
+      buildCmd = Just (Cmd ["ghc", "--make", "-no-keep-hi-files", "-no-keep-o-files", "Main.hs"]),
+      builtFile = Just "Main",
+      runCmd = Cmd ["./Main"]
     }
 
 go :: Language
 go =
   Language
-    { langName = LangName "go",
-      sourceFile = SourceFile "main.go"
+    { langName = "go",
+      sourceFile = "main.go",
+      buildCmd = Just (Cmd ["go", "build", "-o", "main", "main.go"]),
+      builtFile = Just "main",
+      runCmd = Cmd ["./main"]
     }
 
 rust :: Language
 rust =
   Language
-    { langName = LangName "rust",
-      sourceFile = SourceFile "main.rs"
+    { langName = "rust",
+      sourceFile = "main.rs",
+      buildCmd = Just (Cmd ["rustc", "-o", "main", "main.rs"]),
+      builtFile = Just "main",
+      runCmd = Cmd ["./main"]
     }
 
 zig :: Language
 zig =
   Language
-    { langName = LangName "zig",
-      sourceFile = SourceFile "main.zig"
+    { langName = "zig",
+      sourceFile = "main.zig",
+      buildCmd = Just (Cmd ["zig", "-c", "main.zig"]),
+      builtFile = Just "main",
+      runCmd = Cmd ["./main"]
     }
 
 langs :: [Language]
@@ -92,8 +119,30 @@ detectLanguageIO = runExceptT $ do
 
     findLangInFiles :: [FilePath] -> Language -> Maybe Language
     findLangInFiles files lang =
-      let SourceFile src = sourceFile lang
+      let src = sourceFile lang
        in if src `elem` files then Just lang else Nothing
 
     maybeLang :: Maybe Language -> Either AppError Language
     maybeLang = maybe (Left $ ProviderError "No matching language found") Right
+
+buildLanguageIO :: (HasExecutor m, HasLogger m) => Language -> m (Either AppError ())
+buildLanguageIO lang = do
+  logInfo "Building language ..."
+  case buildCmd lang of
+    Nothing -> return $ Right ()
+    Just cmd ->
+      executeCmd cmd (Stdin "")
+        >>= either (return . Left) showMsg
+  where
+    showMsg :: (HasLogger m) => Stdout -> m (Either AppError ())
+    showMsg (Stdout output) = do
+      logInfo $ "Building Language output: " <> TEnc.decodeUtf8 output
+      return $ Right ()
+
+cleanupBuiltFileIO :: (HasFileSystem m, HasLogger m) => Language -> m (Either AppError ())
+cleanupBuiltFileIO lang = do
+  logInfo "Cleaning up build files ..."
+
+  case builtFile lang of
+    Nothing -> return $ Right ()
+    Just f -> do removeFile f
