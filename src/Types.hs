@@ -6,8 +6,10 @@ module Types
     ProblemId (..),
     validateProblemId,
     Task (..),
-    LanguageId,
-    SourceFile,
+    LangName (..),
+    SourceFile (..),
+    Language (..),
+    RunTestCaseResult (..),
     Session (..),
     validateSession,
     TestCase (..),
@@ -37,12 +39,14 @@ data Task = Task
   }
   deriving (Eq, Ord, Show)
 
--- | Language ID (e.g., 4001 for C++, 4011 for Python)
-newtype LanguageId = LanguageId Int
+newtype LangName = LangName T.Text
   deriving (Eq, Ord, Show)
 
 -- | Source file path (e.g., "./main.cpp")
-newtype SourceFile = SourceFile FilePath
+newtype SourceFile = SourceFile String
+  deriving (Eq, Ord, Show)
+
+newtype RunTestCaseResult = RunTestCaseResult ByteString
   deriving (Eq, Ord, Show)
 
 -- | Session Cookie as raw text
@@ -56,6 +60,12 @@ data TestCase = TestCase
     tcOutput :: ByteString
   }
   deriving (Eq, Show)
+
+data Language = Language
+  { langName :: LangName,
+    sourceFile :: SourceFile
+  }
+  deriving (Eq, Ord, Show)
 
 -- | Submission ID
 newtype SubmissionId = SubmissionId Int
