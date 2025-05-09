@@ -41,6 +41,8 @@ data MockState = MockState
     msSessionPath :: Either AppError FilePath,
     msTestDir :: Either AppError FilePath,
     msTask :: Either AppError Task,
+    msSaveTestCaseFn :: TestCase -> Either AppError (),
+    msSavedTestCase :: [TestCase],
     msLoadSessionResult :: Either AppError Session,
     msSaveSessionResult :: Session -> Either AppError (),
     msSavedSessions :: [Session],
@@ -66,6 +68,8 @@ initialMockState =
       msSessionPath = Right "/tmp/session.txt",
       msTestDir = Right "/tmp/abc100/a/test",
       msTask = Right (Task (ContestId "abc100") (ProblemId "a")),
+      msSaveTestCaseFn = \_ -> Right (),
+      msSavedTestCase = [],
       msLoadSessionResult = Left SessionNotFound,
       msSaveSessionResult = \_ -> Right (),
       msSavedSessions = [],
@@ -135,6 +139,15 @@ instance HasSession MockApp where
     case resultFunc session of
       Right () -> do
         modify $ \s -> s {msSavedSessions = msSavedSessions s ++ [session]}
+        pure $ Right ()
+      Left err -> pure $ Left err
+
+instance HasTestCase MockApp where
+  saveTestCase tc = do
+    fn <- gets msSaveTestCaseFn
+    case fn tc of
+      Right () -> do
+        modify $ \s -> s {msSavedTestCase = msSavedTestCase s ++ [tc]}
         pure $ Right ()
       Left err -> pure $ Left err
 

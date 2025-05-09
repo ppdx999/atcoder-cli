@@ -39,6 +39,7 @@ library
       Provider.Logger
       Provider.Req
       Provider.Stdin
+      Provider.TestCase
       Provider.User
       Provider.Utils
       Paths_atcli

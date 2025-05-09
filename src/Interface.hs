@@ -9,6 +9,7 @@ module Interface
     MonadReq (..),
     HasStdin (..),
     HasSession (..),
+    HasTestCase (..),
     HasUser (..),
   )
 where
@@ -45,6 +46,9 @@ class (Monad m) => HasConfig m where
 class (Monad m) => HasSession m where
   loadSession :: m (Either AppError Session)
   saveSession :: Session -> m (Either AppError ())
+
+class (Monad m) => HasTestCase m where
+  saveTestCase :: TestCase -> m (Either AppError ())
 
 class (Monad m) => HasAtcoder m where
   fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
