@@ -1,5 +1,6 @@
 -- src/App/Setup.hs
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 -- Orphan instance warning を抑制
 {-# OPTIONS_GHC -Wno-orphans #-}
@@ -11,6 +12,7 @@ import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
 import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, saveFileIO)
+import Provider.Language (detectLanguageIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
@@ -48,6 +50,9 @@ instance HasTestCase IO where
 instance HasSession IO where
   loadSession = loadSessionIO
   saveSession = saveSessionIO
+
+instance HasLanguage IO where
+  detectLanguage = detectLanguageIO
 
 instance MonadReq IO where
   reqGet = reqGetIO

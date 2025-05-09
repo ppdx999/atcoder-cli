@@ -34,6 +34,7 @@ data MockState = MockState
     msDoesFileExistQueue :: [Bool],
     msCurrentDir :: FilePath,
     msTestCasesResult :: Either AppError [TestCase],
+    msReadDir :: Either AppError [FilePath],
     msReadFiles :: Either AppError ByteString,
     msSaveFileResult :: FilePath -> ByteString -> Either AppError (),
     msSavedFiles :: Map FilePath ByteString,
@@ -61,6 +62,7 @@ initialMockState =
       msDoesFileExistQueue = [True],
       msCurrentDir = "/tmp/abc100/a",
       msTestCasesResult = Right [],
+      msReadDir = Right [],
       msReadFiles = Right "fileData",
       msSaveFileResult = \_ _ -> Right (),
       msSavedFiles = Map.empty,
@@ -119,6 +121,7 @@ instance HasFileSystem MockApp where
         pure x
   getCurrentDirectory = gets msCurrentDir
   readFile _filePath = gets msReadFiles
+  readDir _filePath = gets msReadDir
   saveFile path content = do
     resultFunc <- gets msSaveFileResult
     case resultFunc path content of

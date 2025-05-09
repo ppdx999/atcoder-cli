@@ -34,6 +34,7 @@ library
       Provider.Atcoder
       Provider.Session
       Provider.Config
+      Provider.Language
   other-modules:
       Provider.FileSystem
       Provider.Logger
@@ -93,7 +94,9 @@ test-suite atcli-test
       Mock
       Provider.AtcoderSpec
       Provider.ConfigSpec
+      Provider.LanguageSpec
       Provider.SessionSpec
+      TestUtils
       TypesSpec
       Usecase.DownloadSpec
       Usecase.InitSpec

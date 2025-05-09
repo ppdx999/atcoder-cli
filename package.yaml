@@ -48,6 +48,7 @@ library:
     - Provider.Atcoder
     - Provider.Session
     - Provider.Config
+    - Provider.Language
 
 executables:
   atcli:
