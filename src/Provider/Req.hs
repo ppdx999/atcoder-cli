@@ -42,10 +42,14 @@ import Provider.Utils (maybeToExceptT, try)
 import Text.URI (mkURI)
 import Types
 
+normalizeHtml :: T.Text -> T.Text
+normalizeHtml =
+  T.replace "\r\n" "\n"
+
 getHtmlIO :: (HasSession m, MonadIO m, MonadCatch m) => String -> m (Either AppError Text)
 getHtmlIO url =
   reqGetIO url bsResponse defaultHttpConfig mempty
-    <&> fmap (TEnc.decodeUtf8 . responseBody)
+    <&> fmap (normalizeHtml . TEnc.decodeUtf8 . responseBody)
 
 reqGetIO ::
   (HasSession m, MonadIO m, MonadCatch m, HttpResponse r) =>
