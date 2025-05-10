@@ -54,7 +54,7 @@ class (Monad m) => HasSession m where
 class (Monad m) => HasTestCase m where
   loadTestCases :: m (Either AppError [TestCase])
   saveTestCase :: TestCase -> m (Either AppError ())
-  report :: (TestCase, RunTestCaseResult) -> m (Either AppError ())
+  reportTestResult :: (TestCase, RunTestCaseResult) -> m (Either AppError ())
 
 class (Monad m) => HasLanguage m where
   detectLanguage :: m (Either AppError Language)

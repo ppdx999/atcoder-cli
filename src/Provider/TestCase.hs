@@ -1,14 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Provider.TestCase (loadTestCasesIO, saveTestCaseIO) where
+module Provider.TestCase (loadTestCasesIO, saveTestCaseIO, reportTestResultIO) where
 
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TEnc
 import Interface
 import System.FilePath (takeBaseName, takeExtension, (</>))
-import Types (AppError, TestCase (TestCase))
+import Types (AppError, RunTestCaseResult (RunTestCaseResult), TestCase (TestCase))
 import Prelude hiding (readFile)
 
 loadTestCasesIO :: (MonadIO m, HasConfig m, HasFileSystem m, HasLogger m) => m (Either AppError [TestCase])
@@ -45,3 +46,22 @@ saveTestCaseIO (TestCase tcName tcInput tcOutput) = runExceptT $ do
 
   lift $ logInfo $ "Saving " <> T.pack outFile
   ExceptT $ saveFile outFile tcOutput
+
+reportTestResultIO :: (HasUser m) => (TestCase, RunTestCaseResult) -> m (Either AppError ())
+reportTestResultIO (TestCase name input want, RunTestCaseResult got) = do
+  if got == want
+    then do
+      sendMsg $ "TestCase - " <> name <> " : OK"
+      pure $ Right ()
+    else do
+      sendMsg $ "TestCase - " <> name <> " : Fail"
+      sendMsg "Input:"
+      sendMsg $ TEnc.decodeUtf8 input
+      sendMsg ""
+      sendMsg "Want:"
+      sendMsg $ TEnc.decodeUtf8 want
+      sendMsg ""
+      sendMsg "Got:"
+      sendMsg $ TEnc.decodeUtf8 got
+      sendMsg ""
+      pure $ Right ()

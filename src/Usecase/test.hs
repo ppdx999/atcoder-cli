@@ -33,7 +33,7 @@ test = runExceptT $ do
   results <- traverse (ExceptT . runTestCase lang) tcs
 
   lift $ logInfo "Testcase Result ..."
-  traverse_ (ExceptT . report) $ zip tcs results
+  traverse_ (ExceptT . reportTestResult) $ zip tcs results
 
   lift $ logInfo "Cleaning up build files ..."
   ExceptT $ cleanupBuiltFile lang
