@@ -16,12 +16,15 @@ where
 
 import Control.Monad.Except (ExceptT (ExceptT), runExceptT)
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Functor ((<&>))
+import Data.List (isInfixOf)
 import qualified Data.List as List
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TEnc
 import qualified Data.Text.IO as TIO
 import Interface (MonadReq (..))
 import Network.HTTP.Req (HttpConfig (..), defaultHttpConfig, ignoreResponse, responseStatusCode)
+import Text.HTML.TagSoup
 import Text.Regex.TDFA
 import Types
 
@@ -54,7 +57,7 @@ fetchTestCasesIO ::
   m (Either AppError [TestCase])
 fetchTestCasesIO env task = do
   fetchProblemPage env task
-    >>= either (pure . Left) parseTestCasesWithRegex
+    >>= either (pure . Left) parseTestCases
 
 verifySessionIO ::
   (MonadIO m, MonadReq m) =>
@@ -112,47 +115,23 @@ parseProblemIdsWithRegex' html =
     pattern :: T.Text
     pattern = "/contests/[^/]+/tasks/[^/]+_[a-zA-Z0-9]+"
 
-parseTestCasesWithRegex :: (MonadIO m) => T.Text -> m (Either AppError [TestCase])
-parseTestCasesWithRegex body = do
-  liftIO $ TIO.putStrLn "Parsing HTML response for test cases using Regex..."
-  return $ parseTestCasesWithRegex' body
-
-parseTestCasesWithRegex' :: T.Text -> Either AppError [TestCase]
-parseTestCasesWithRegex' html = do
-  pairs <-
-    pairUp
-      . map extractPreContents
-      . extractSampleLine
-      $ html
-  Right (map mkTestCase $ zipPairs pairs)
+parseTestCases :: (MonadIO m) => T.Text -> m (Either AppError [TestCase])
+parseTestCases body = do
+  liftIO $ TIO.putStrLn "Parsing HTML response for test cases..."
+  return $ go body
   where
-    extractSampleLine :: T.Text -> [T.Text]
-    extractSampleLine html' = getAllTextMatches (html' =~ pattern) :: [T.Text]
-      where
-        pattern :: T.Text
-        pattern = "<h3>(入力例|出力例)[[:space:]]*[[:digit:]]+</h3>[[:space:]]*<pre>([[:print:][:space:]]*)[[:space:]]*</pre>"
-
-    extractPreContents :: T.Text -> T.Text
-    extractPreContents line = case matches of
-      (_, _, _, [content]) -> T.strip content
-      _ -> ""
-      where
-        pattern' :: T.Text
-        pattern' = "<pre>([[:print:][:space:]]*)[[:space:]]*</pre>"
-        matches = line =~ pattern' :: (T.Text, T.Text, T.Text, [T.Text])
+    go :: T.Text -> Either AppError [TestCase]
+    go html =
+      pairUp (parseSamples html)
+        <&> map mkTestCase . zipPairs
 
     mkTestCase :: (Int, (T.Text, T.Text)) -> TestCase
     mkTestCase (i, (input, output)) =
       TestCase
         { tcName = T.pack (show i),
-          tcInput = TEnc.encodeUtf8 $ wrapNewLine input,
-          tcOutput = TEnc.encodeUtf8 $ wrapNewLine output
+          tcInput = TEnc.encodeUtf8 input,
+          tcOutput = TEnc.encodeUtf8 output
         }
-
-    wrapNewLine :: T.Text -> T.Text
-    wrapNewLine txt
-      | T.isSuffixOf "\n" txt = txt
-      | otherwise = txt <> "\n"
 
     pairUp :: [a] -> Either AppError [(a, a)]
     pairUp [] = Right []
@@ -161,3 +140,20 @@ parseTestCasesWithRegex' html = do
 
     zipPairs :: [(a, a)] -> [(Int, (a, a))]
     zipPairs = zip [1 ..]
+
+    parseSamples :: T.Text -> [T.Text]
+    parseSamples html =
+      go (parseTags (T.unpack html)) []
+      where
+        go [] acc = acc
+        go (TagOpen "h3" _ : TagText heading : TagClose "h3" : rest) acc
+          | "入力例" `isInfixOf` heading || "出力例" `isInfixOf` heading =
+              case extractPre rest of
+                (Just content, rest') -> go rest' (acc ++ [content])
+                (Nothing, rest') -> go rest' acc
+        go (_ : xs) acc = go xs acc
+
+        extractPre (TagOpen "pre" _ : TagText content : TagClose "pre" : rest) =
+          (Just $ T.pack content, rest)
+        extractPre (_x : xs) = extractPre xs
+        extractPre _ = (Nothing, [])

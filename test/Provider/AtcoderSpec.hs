@@ -107,16 +107,21 @@ spec = describe "Provider.Atcoder" $ do
             T.unlines
               [ "<html><body>",
                 "<h3>入力例 1</h3>",
-                "<pre>1 2</pre>",
+                "<pre>1 2",
+                "</pre>",
                 "<h3>出力例 1</h3>",
                 "<pre>3",
                 "</pre>",
                 "<h3>入力例 2</h3>",
-                "<pre>10 20</pre>",
+                "<pre>10 20",
+                "</pre>",
                 "<h3>出力例 2</h3>",
                 "<pre>30",
                 "20",
                 "</pre>",
+                "<h3>Sample 1</h3>",
+                "<pre>",
+                "</pre>", -- そのほかにPreが来ても無視される
                 "</body></html>"
               ]
       let responses = Map.singleton url (Right dummyHtml)

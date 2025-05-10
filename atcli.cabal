@@ -61,6 +61,7 @@ library
     , process
     , regex-tdfa
     , req
+    , tagsoup
     , text
     , time
     , transformers
@@ -86,6 +87,7 @@ executable atcli
     , process
     , regex-tdfa
     , req
+    , tagsoup
     , text
     , time
     , transformers
@@ -123,6 +125,7 @@ test-suite atcli-test
     , process
     , regex-tdfa
     , req
+    , tagsoup
     , text
     , time
     , transformers

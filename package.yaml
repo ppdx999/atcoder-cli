@@ -36,6 +36,7 @@ dependencies:
   - regex-tdfa
   - modern-uri
   - process
+  - tagsoup
 
 library:
   source-dirs: src
