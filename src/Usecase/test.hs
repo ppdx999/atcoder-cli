@@ -34,7 +34,7 @@ test = runExceptT $ do
   traverse_ (ExceptT . runAndReport lang) tcs
 
   logInfoE "Cleaning up build files ..."
-  ExceptT $ cleanupBuildFile lang
+  ExceptT $ cleanupBuiltFile lang
   where
     logInfoE :: (HasLogger m, MonadTrans t) => T.Text -> t m ()
     logInfoE = lift . logInfo
