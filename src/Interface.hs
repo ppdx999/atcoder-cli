@@ -13,6 +13,8 @@ module Interface
     HasLanguage (..),
     HasExecutor (..),
     HasUser (..),
+    HasClipboard (..),
+    HasBrowser (..),
   )
 where
 
@@ -69,6 +71,7 @@ class (Monad m) => HasAtcoder m where
   fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
   fetchTestCases :: Task -> m (Either AppError [TestCase])
   verifySession :: Session -> m (Either AppError Bool)
+  submitPageUrl :: Task -> m Text
 
 class (Monad m) => MonadReq m where
   reqGet ::
@@ -90,6 +93,12 @@ class (Monad m) => MonadReq m where
 
 class (Monad m) => HasStdin m where
   readLine :: m Text
+
+class (Monad m) => HasClipboard m where
+  setClipboardBytestring :: ByteString -> m (Either AppError ())
+
+class (Monad m) => HasBrowser m where
+  openBrowser :: Text -> m (Either AppError ())
 
 class (Monad m) => HasUser m where
   sendMsg :: Text -> m ()
