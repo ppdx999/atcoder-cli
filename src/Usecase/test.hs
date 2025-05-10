@@ -6,40 +6,34 @@ import Control.Monad.Trans (MonadTrans (lift))
 import Control.Monad.Trans.Except (ExceptT (ExceptT), runExceptT)
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
-import Interface (HasLanguage (..), HasLogger (..), HasReporter (..), HasTestCase (..))
+import Interface (HasLanguage (..), HasLogger (..), HasTestCase (..))
 import Types
 
 test ::
   ( HasLogger m,
     HasLanguage m,
-    HasTestCase m,
-    HasReporter m
+    HasTestCase m
   ) =>
   m (Either AppError ())
 test = runExceptT $ do
-  logInfoE "Testing ..."
+  lift $ logInfo "Testing ..."
 
-  logInfoE "Detecting language ..."
+  lift $ logInfo "Detecting language ..."
   lang <- ExceptT detectLanguage
-  logInfoE $ "Detected language: " <> langName lang
+  lift $ logInfo $ "Detected language: " <> langName lang
 
-  logInfoE "Building language ..."
+  lift $ logInfo "Building language ..."
   ExceptT $ buildLanguage lang
 
-  logInfoE "Loading test cases ..."
+  lift $ logInfo "Loading test cases ..."
   tcs <- ExceptT loadTestCases
-  logInfoE $ "Found " <> T.pack (show $ length tcs) <> " test cases."
+  lift $ logInfo $ "Found " <> T.pack (show $ length tcs) <> " test cases."
 
-  logInfoE "Running test cases ..."
-  traverse_ (ExceptT . runAndReport lang) tcs
+  lift $ logInfo "Running test cases ..."
+  results <- traverse (ExceptT . runTestCase lang) tcs
 
-  logInfoE "Cleaning up build files ..."
+  lift $ logInfo "Testcase Result ..."
+  traverse_ (ExceptT . report) $ zip tcs results
+
+  lift $ logInfo "Cleaning up build files ..."
   ExceptT $ cleanupBuiltFile lang
-  where
-    logInfoE :: (HasLogger m, MonadTrans t) => T.Text -> t m ()
-    logInfoE = lift . logInfo
-
-    runAndReport :: (HasLanguage m, HasReporter m) => Language -> TestCase -> m (Either AppError ())
-    runAndReport lang tc =
-      runTestCase lang tc
-        >>= either (return . Left) (report tc)
