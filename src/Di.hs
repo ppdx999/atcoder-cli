@@ -18,7 +18,7 @@ import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
 import Provider.Stdin (readLineIO)
-import Provider.TestCase (saveTestCaseIO)
+import Provider.TestCase (loadTestCasesIO, saveTestCaseIO)
 import Provider.User (sendMsgIO)
 import Types (AppError, Stdout (..))
 
@@ -47,6 +47,7 @@ instance HasAtcoder IO where
   verifySession = verifySessionIO AtCoderEnv
 
 instance HasTestCase IO where
+  loadTestCases = loadTestCasesIO
   saveTestCase = saveTestCaseIO
 
 instance HasSession IO where
