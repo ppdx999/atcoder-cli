@@ -56,12 +56,22 @@ reportTestResultIO (TestCase name input want, RunTestCaseResult got) = do
     else do
       sendMsg $ "TestCase - " <> name <> " : Fail"
       sendMsg "Input:"
-      sendMsg $ TEnc.decodeUtf8 input
+      sendMsg $ visualizeWhitespace $ TEnc.decodeUtf8 input
       sendMsg ""
       sendMsg "Want:"
-      sendMsg $ TEnc.decodeUtf8 want
+      sendMsg $ visualizeWhitespace $ TEnc.decodeUtf8 want
       sendMsg ""
       sendMsg "Got:"
-      sendMsg $ TEnc.decodeUtf8 got
+      sendMsg $ visualizeWhitespace $ TEnc.decodeUtf8 got
       sendMsg ""
       pure $ Right ()
+
+visualizeWhitespace :: T.Text -> T.Text
+visualizeWhitespace =
+  T.concatMap replaceChar
+  where
+    replaceChar c = case c of
+      ' ' -> "[SP]"
+      '\t' -> "[TAB]"
+      '\n' -> "[LF]\n"
+      _ -> T.singleton c
