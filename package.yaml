@@ -46,6 +46,7 @@ library:
     - Usecase.Init
     - Usecase.Download
     - Usecase.Login
+    - Usecase.Test
     - Provider.Atcoder
     - Provider.Session
     - Provider.Config

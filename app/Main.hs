@@ -2,8 +2,8 @@
 
 module Main (main) where
 
-import Control.Monad.Except (liftEither)
-import Control.Monad.Trans.Except (ExceptT, throwE)
+import Control.Monad.Except (ExceptT (ExceptT), liftEither)
+import Control.Monad.Trans.Except (throwE)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Di (runAppM)
@@ -14,6 +14,7 @@ import Types (AppError (ProviderError), validateContestId)
 import Usecase.Download (download)
 import Usecase.Init (initContest)
 import Usecase.Login (login)
+import Usecase.Test (test)
 
 main :: IO ()
 main = do
@@ -28,6 +29,7 @@ runMain ["init", contestIdStr] = do
   initContest contestId
 runMain ["download"] = download
 runMain ["login"] = login
+runMain ["test"] = ExceptT test
 runMain _ =
   throwE $ ProviderError "Invalid arguments: Usage: atcli <contest-id>"
 
