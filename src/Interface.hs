@@ -12,7 +12,6 @@ module Interface
     HasTestCase (..),
     HasLanguage (..),
     HasExecutor (..),
-    HasReporter (..),
     HasUser (..),
   )
 where
@@ -55,6 +54,7 @@ class (Monad m) => HasSession m where
 class (Monad m) => HasTestCase m where
   loadTestCases :: m (Either AppError [TestCase])
   saveTestCase :: TestCase -> m (Either AppError ())
+  report :: (TestCase, RunTestCaseResult) -> m (Either AppError ())
 
 class (Monad m) => HasLanguage m where
   detectLanguage :: m (Either AppError Language)
@@ -64,9 +64,6 @@ class (Monad m) => HasLanguage m where
 
 class (Monad m) => HasExecutor m where
   executeCmd :: Cmd -> Stdin -> m (Either AppError Stdout)
-
-class (Monad m) => HasReporter m where
-  report :: TestCase -> RunTestCaseResult -> m (Either AppError ())
 
 class (Monad m) => HasAtcoder m where
   fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
