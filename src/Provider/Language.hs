@@ -12,6 +12,7 @@ module Provider.Language
     zig,
     langs,
     buildLanguageIO,
+    runTestCaseIO,
     cleanupBuiltFileIO,
   )
 where
@@ -138,6 +139,15 @@ buildLanguageIO lang = do
     showMsg (Stdout output) = do
       logInfo $ "Building Language output: " <> TEnc.decodeUtf8 output
       return $ Right ()
+
+runTestCaseIO :: (HasExecutor m, HasLogger m) => Language -> TestCase -> m (Either AppError RunTestCaseResult)
+runTestCaseIO lang tc = do
+  logInfo "Running testcase ..."
+  executeCmd (runCmd lang) (Stdin (tcInput tc))
+    >>= either (return . Left) (return . Right . toTestCaseResult)
+  where
+    toTestCaseResult :: Stdout -> RunTestCaseResult
+    toTestCaseResult (Stdout bytes) = RunTestCaseResult bytes
 
 cleanupBuiltFileIO :: (HasFileSystem m, HasLogger m) => Language -> m (Either AppError ())
 cleanupBuiltFileIO lang = do

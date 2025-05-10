@@ -13,7 +13,7 @@ import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
 import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, removeFileIO, saveFileIO)
-import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO)
+import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO, runTestCaseIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
@@ -57,6 +57,7 @@ instance HasSession IO where
 instance HasLanguage IO where
   detectLanguage = detectLanguageIO
   buildLanguage = buildLanguageIO
+  runTestCase = runTestCaseIO
   cleanupBuiltFile = cleanupBuiltFileIO
 
 instance HasExecutor IO where
