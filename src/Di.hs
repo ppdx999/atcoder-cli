@@ -12,6 +12,7 @@ import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
+import Provider.Executor (executeCmdIO)
 import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, removeFileIO, saveFileIO)
 import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO, runTestCaseIO)
 import Provider.Logger (logErrorIO, logInfoIO)
@@ -20,7 +21,7 @@ import Provider.Session (loadSessionIO, saveSessionIO)
 import Provider.Stdin (readLineIO)
 import Provider.TestCase (loadTestCasesIO, saveTestCaseIO)
 import Provider.User (sendMsgIO)
-import Types (AppError, Stdout (..))
+import Types (AppError)
 
 instance HasLogger IO where
   logInfo = logInfoIO
@@ -61,8 +62,7 @@ instance HasLanguage IO where
   cleanupBuiltFile = cleanupBuiltFileIO
 
 instance HasExecutor IO where
-  -- 仮実装
-  executeCmd _ _ = return $ Right (Stdout "")
+  executeCmd = executeCmdIO
 
 instance MonadReq IO where
   reqGet = reqGetIO

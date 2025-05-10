@@ -35,6 +35,7 @@ dependencies:
   - req
   - regex-tdfa
   - modern-uri
+  - process
 
 library:
   source-dirs: src

@@ -36,6 +36,7 @@ library
       Provider.Config
       Provider.Language
   other-modules:
+      Provider.Executor
       Provider.FileSystem
       Provider.Logger
       Provider.Req
@@ -56,6 +57,7 @@ library
     , filepath
     , modern-uri
     , mtl
+    , process
     , regex-tdfa
     , req
     , text
@@ -80,6 +82,7 @@ executable atcli
     , filepath
     , modern-uri
     , mtl
+    , process
     , regex-tdfa
     , req
     , text
@@ -116,6 +119,7 @@ test-suite atcli-test
     , hspec >=2.7 && <3
     , modern-uri
     , mtl
+    , process
     , regex-tdfa
     , req
     , text
