@@ -11,6 +11,7 @@ module Di (runAppM) where
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
+import Provider.Browser (openBrowserIO)
 import Provider.Clipboard (setClipboardIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
 import Provider.Executor (executeCmdIO)
@@ -83,6 +84,9 @@ instance HasUser IO where
 
 instance HasClipboard IO where
   setClipboard = setClipboardIO
+
+instance HasBrowser IO where
+  openBrowser = openBrowserIO
 
 runAppM :: ExceptT AppError IO a -> IO (Either AppError a)
 runAppM = runExceptT
