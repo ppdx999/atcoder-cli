@@ -48,6 +48,7 @@ library:
     - Usecase.Download
     - Usecase.Login
     - Usecase.Test
+    - Usecase.Submit
     - Provider.Atcoder
     - Provider.Session
     - Provider.Config

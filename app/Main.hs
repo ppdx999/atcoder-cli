@@ -14,6 +14,7 @@ import Types (AppError (ProviderError), validateContestId)
 import Usecase.Download (download)
 import Usecase.Init (initContest)
 import Usecase.Login (login)
+import Usecase.Submit (submit)
 import Usecase.Test (test)
 
 main :: IO ()
@@ -30,6 +31,7 @@ runMain ["init", contestIdStr] = do
 runMain ["download"] = download
 runMain ["login"] = login
 runMain ["test"] = ExceptT test
+runMain ["submit"] = ExceptT submit
 runMain _ =
   throwE $ ProviderError "Invalid arguments: Usage: atcli <contest-id>"
 

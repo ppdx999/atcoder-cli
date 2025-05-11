@@ -32,11 +32,13 @@ library
       Usecase.Download
       Usecase.Login
       Usecase.Test
+      Usecase.Submit
       Provider.Atcoder
       Provider.Session
       Provider.Config
       Provider.Language
   other-modules:
+      Provider.Browser
       Provider.Clipboard
       Provider.Executor
       Provider.FileSystem
@@ -47,7 +49,6 @@ library
       Provider.TestCase
       Provider.User
       Provider.Utils
-      Usecase.Submit
       Paths_atcli
   hs-source-dirs:
       src
