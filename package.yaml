@@ -33,7 +33,6 @@ dependencies:
   - transformers
   - directory
   - req
-  - regex-tdfa
   - modern-uri
   - process
   - tagsoup

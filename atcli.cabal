@@ -63,7 +63,6 @@ library
     , modern-uri
     , mtl
     , process
-    , regex-tdfa
     , req
     , tagsoup
     , text
@@ -89,7 +88,6 @@ executable atcli
     , modern-uri
     , mtl
     , process
-    , regex-tdfa
     , req
     , tagsoup
     , text
@@ -127,7 +125,6 @@ test-suite atcli-test
     , modern-uri
     , mtl
     , process
-    , regex-tdfa
     , req
     , tagsoup
     , text

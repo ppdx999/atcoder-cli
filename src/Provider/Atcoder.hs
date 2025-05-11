@@ -27,7 +27,6 @@ import qualified Data.Text.IO as TIO
 import Interface (MonadReq (..))
 import Network.HTTP.Req (HttpConfig (..), defaultHttpConfig, ignoreResponse, responseStatusCode)
 import Text.HTML.TagSoup
-import Text.Regex.TDFA
 import Text.URI
 import Types
 
@@ -50,7 +49,7 @@ fetchProblemIdsIO ::
   m (Either AppError [ProblemId])
 fetchProblemIdsIO env contestId =
   fetchTaskPage env contestId
-    >>= either (pure . Left) parseProblemIdsWithRegex
+    >>= either (pure . Left) parseProblemIds
 
 -- | Real IO implementation for fetchTestCases (骨格 - req + Regex 想定)
 fetchTestCasesIO ::
@@ -110,23 +109,31 @@ fetchProblemPage _env (Task (ContestId cid) (ProblemId pid)) = do
   liftIO $ TIO.putStrLn $ "[Skeleton] Fetching test cases from: " <> T.pack url
   getHtml url
 
--- --- Regex Parsing Helpers ---
+-- --- Parsing Helpers ---
+parseProblemIds :: (MonadIO m) => T.Text -> m (Either AppError [ProblemId])
+parseProblemIds html = do
+  liftIO $ TIO.putStrLn "Parsing HTML response for problem ids..."
 
--- | Parses Problem IDs from HTML ByteString using regex.
-parseProblemIdsWithRegex :: (MonadIO m) => T.Text -> m (Either AppError [ProblemId])
-parseProblemIdsWithRegex body = do
-  liftIO $ TIO.putStrLn "[Skeleton] Parsing HTML response for test cases using Regex..."
-  return $ parseProblemIdsWithRegex' body
-
-parseProblemIdsWithRegex' :: T.Text -> Either AppError [ProblemId]
-parseProblemIdsWithRegex' html =
-  traverse validateProblemId
-    . List.nub
-    . map (T.takeWhileEnd (/= '_'))
-    $ getAllTextMatches (html =~ pattern)
+  return
+    $ traverse validateProblemId
+      . List.nub
+      . map extractId
+      . filter isTaskLink
+    $ parseTags html
   where
-    pattern :: T.Text
-    pattern = "/contests/[^/]+/tasks/[^/]+_[a-zA-Z0-9]+"
+    isTaskLink :: Tag T.Text -> Bool
+    isTaskLink (TagOpen "a" attrs) =
+      case lookup "href" attrs of
+        Just href -> "/contests/" `T.isPrefixOf` href && "/tasks/" `T.isInfixOf` href
+        Nothing -> False
+    isTaskLink _ = False
+
+    extractId :: Tag T.Text -> T.Text
+    extractId (TagOpen "a" attrs) =
+      case lookup "href" attrs of
+        Just href -> T.takeWhileEnd (/= '_') href
+        Nothing -> ""
+    extractId _ = ""
 
 parseTestCases :: (MonadIO m) => T.Text -> m (Either AppError [TestCase])
 parseTestCases body = do
