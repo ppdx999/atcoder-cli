@@ -10,31 +10,49 @@ module Provider.FileSystem
   )
 where
 
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Catch (MonadCatch)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Interface (HasLogger (..))
 import Provider.Utils (try)
 import qualified System.Directory as Dir
 import Types (AppError (..))
 
-createDirectoryIO :: FilePath -> IO (Either AppError ())
-createDirectoryIO = try . Dir.createDirectoryIfMissing True
+createDirectoryIO :: (HasLogger m, MonadIO m, MonadCatch m) => FilePath -> m (Either AppError ())
+createDirectoryIO path = do
+  logInfo $ "create directory: " <> path
+  try . liftIO . Dir.createDirectoryIfMissing True $ path
 
-createDirectoryIfMissingIO :: Bool -> FilePath -> IO (Either AppError ())
-createDirectoryIfMissingIO = (try .) . Dir.createDirectoryIfMissing
+createDirectoryIfMissingIO :: (HasLogger m, MonadIO m, MonadCatch m) => Bool -> FilePath -> m (Either AppError ())
+createDirectoryIfMissingIO missing path = do
+  logInfo $ "create directory if missing: " <> path
+  try $ liftIO $ Dir.createDirectoryIfMissing missing path
 
-getCurrentDirectoryIO :: IO FilePath
-getCurrentDirectoryIO = Dir.getCurrentDirectory
+getCurrentDirectoryIO :: (HasLogger m, MonadIO m) => m FilePath
+getCurrentDirectoryIO = do
+  logInfo "get current directory..."
+  liftIO Dir.getCurrentDirectory
 
-readFileIO :: FilePath -> IO (Either AppError String)
-readFileIO = try . readFile
+readFileIO :: (HasLogger m, MonadIO m, MonadCatch m) => FilePath -> m (Either AppError String)
+readFileIO path = do
+  logInfo $ "read file: " <> path
+  try $ liftIO $ readFile path
 
-saveFileIO :: FilePath -> String -> IO (Either AppError ())
-saveFileIO = (try .) . writeFile
+saveFileIO :: (HasLogger m, MonadIO m, MonadCatch m) => FilePath -> String -> m (Either AppError ())
+saveFileIO path content = do
+  logInfo $ "save file: " <> path
+  try $ liftIO $ writeFile path content
 
-removeFileIO :: FilePath -> IO (Either AppError ())
-removeFileIO = try . Dir.removeFile
+removeFileIO :: (HasLogger m, MonadIO m, MonadCatch m) => FilePath -> m (Either AppError ())
+removeFileIO path = do
+  logInfo $ "remove file: " <> path
+  try $ liftIO $ Dir.removeFile path
 
-readDirIO :: FilePath -> IO (Either AppError [FilePath])
-readDirIO = try . Dir.getDirectoryContents
+readDirIO :: (HasLogger m, MonadIO m, MonadCatch m) => FilePath -> m (Either AppError [FilePath])
+readDirIO path = do
+  logInfo $ "read directory: " <> path
+  try $ liftIO $ Dir.getDirectoryContents path
 
-doesFileExistIO :: FilePath -> IO Bool
-doesFileExistIO = liftIO . Dir.doesFileExist
+doesFileExistIO :: (HasLogger m, MonadIO m) => FilePath -> m Bool
+doesFileExistIO path = do
+  logInfo $ "does file exist..." <> path
+  liftIO $ Dir.doesFileExist path

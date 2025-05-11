@@ -41,8 +41,9 @@ saveTestCaseIO (TestCase tcName tcInput tcOutput) = runExceptT $ do
 
   ExceptT $ saveFile outFile tcOutput
 
-reportTestResultIO :: (HasUser m) => (TestCase, RunTestCaseResult) -> m (Either AppError ())
+reportTestResultIO :: (HasUser m, HasLogger m) => (TestCase, RunTestCaseResult) -> m (Either AppError ())
 reportTestResultIO (TestCase name input want, RunTestCaseResult got) = do
+  logInfo "report test result..."
   if got == want
     then do
       sendMsg $ "TestCase - " <> name <> " : OK"

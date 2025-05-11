@@ -110,13 +110,18 @@ parseProblemIds :: (MonadIO m, HasLogger m) => String -> m (Either AppError [Pro
 parseProblemIds html = do
   logInfo "Parsing HTML response for problem ids..."
 
-  return
+  either (pure . Left) logResult
     $ traverse validateProblemId
       . List.nub
       . map extractId
       . filter isTaskLink
     $ parseTags html
   where
+    logResult :: (HasLogger m) => [ProblemId] -> m (Either AppError [ProblemId])
+    logResult pid = do
+      logInfo $ show (length pid) <> " problem ids found"
+      return $ Right pid
+
     isTaskLink :: Tag String -> Bool
     isTaskLink (TagOpen "a" attrs) =
       case lookup "href" attrs of
@@ -134,8 +139,13 @@ parseProblemIds html = do
 parseTestCases :: (MonadIO m, HasLogger m) => String -> m (Either AppError [TestCase])
 parseTestCases body = do
   logInfo "Parsing HTML response for test cases..."
-  return $ go body
+  either (pure . Left) logResult (go body)
   where
+    logResult :: (HasLogger m) => [TestCase] -> m (Either AppError [TestCase])
+    logResult tcs = do
+      logInfo $ show (length tcs) <> " test cases found"
+      return $ Right tcs
+
     go :: String -> Either AppError [TestCase]
     go html =
       pairUp (parseSamples html)

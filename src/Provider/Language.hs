@@ -15,6 +15,7 @@ module Provider.Language
   )
 where
 
+import Control.Monad.Trans (MonadTrans (lift))
 import Control.Monad.Trans.Except (ExceptT (ExceptT), runExceptT)
 import Data.Functor ((<&>))
 import Data.Maybe (catMaybes, listToMaybe)
@@ -105,8 +106,9 @@ zig =
 langs :: [Language]
 langs = [c, cpp, python, java, haskell, go, rust, zig]
 
-detectLanguageIO :: (HasFileSystem m) => m (Either AppError Language)
+detectLanguageIO :: (HasFileSystem m, HasLogger m) => m (Either AppError Language)
 detectLanguageIO = runExceptT $ do
+  lift $ logInfo "Detecting language ..."
   cd <- ExceptT $ fmap Right getCurrentDirectory
   files <- ExceptT $ readDir cd <&> fmap (map takeFileName)
 
@@ -125,7 +127,7 @@ detectLanguageIO = runExceptT $ do
 
 buildLanguageIO :: (HasExecutor m, HasLogger m) => Language -> m (Either AppError ())
 buildLanguageIO lang = do
-  logInfo "Building language ..."
+  logInfo $ "Building language(" <> langName lang <> ") ..."
   case buildCmd lang of
     Nothing -> return $ Right ()
     Just cmd ->

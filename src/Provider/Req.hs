@@ -55,7 +55,7 @@ reqGetIO ::
 reqGetIO urlStr proxy config option = do
   sess <- loadSession
   case sess of
-    Left SessionNotFound ->
+    Left SessionNotFound -> do
       reqGetWithoutSessionIO
         urlStr
         proxy
@@ -78,7 +78,7 @@ reqGetWithoutSessionIO ::
   Option Https ->
   m (Either AppError r)
 reqGetWithoutSessionIO urlStr proxy config option = runExceptT $ do
-  lift $ logInfo $ ">>> Performing HTTP GET Request: " <> urlStr
+  lift $ logInfo $ ">>> Performing HTTP GET Request without Session: " <> urlStr
   uri <- ExceptT $ try $ mkURI urlStr
   (url, urlOpt) <- maybeToExceptT (ProviderError "Invalid URI for req") $ useHttpsURI uri
 
@@ -96,7 +96,7 @@ reqGetWithSessionIO ::
   Option Https ->
   m (Either AppError r)
 reqGetWithSessionIO (Session session) urlStr proxy config option = runExceptT $ do
-  lift $ logInfo $ ">>> Performing HTTP GET Request: " <> urlStr
+  lift $ logInfo $ ">>> Performing HTTP GET Request with session: " <> urlStr
   let cookieHeader = header (BSC.pack "Cookie") (BSC.pack $ "REVEL_SESSION=" <> session)
   uri <- ExceptT $ try $ mkURI urlStr
   (url, urlOpt) <- maybeToExceptT (ProviderError "Invalid URI for req") $ useHttpsURI uri

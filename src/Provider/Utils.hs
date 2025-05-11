@@ -7,6 +7,7 @@ module Provider.Utils
     dashToUnderscore,
     crlfToLf,
     takeWhileEnd,
+    join,
   )
 where
 
@@ -52,3 +53,6 @@ crlfToLf [] = []
 takeWhileEnd :: (Char -> Bool) -> String -> String
 takeWhileEnd f =
   reverse . takeWhile f . reverse
+
+join :: String -> [String] -> String
+join sep = foldr (\a b -> a ++ if b == "" then b else sep ++ b) ""

@@ -1,16 +1,20 @@
 module Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO) where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
-import Interface (HasFileSystem (getCurrentDirectory))
+import Interface (HasFileSystem (getCurrentDirectory), HasLogger (..))
 import System.Directory (getHomeDirectory)
 import System.FilePath (pathSeparator, takeBaseName, takeDirectory, (</>))
 import Types (AppError (..), Task (..), validateContestId, validateProblemId)
 
-loadSessionPathIO :: IO (Either AppError FilePath)
-loadSessionPathIO = Right <$> sessionFilePathIO
+loadSessionPathIO :: (MonadIO m, HasLogger m) => m (Either AppError FilePath)
+loadSessionPathIO = do
+  logInfo "load session file path..."
+  home <- liftIO getHomeDirectory
+  return $ Right $ home </> ".local" </> "share" </> "atcoder-cli" </> "session.txt"
 
-loadTaskIO :: (MonadIO m, HasFileSystem m) => m (Either AppError Task)
+loadTaskIO :: (MonadIO m, HasFileSystem m, HasLogger m) => m (Either AppError Task)
 loadTaskIO = do
+  logInfo "load task..."
   currentDir <- getCurrentDirectory
 
   let normalizedPath = dropTrailingSeparator currentDir
@@ -39,12 +43,9 @@ loadTaskIO = do
           (c : _) -> c == pathSeparator
           [] -> False
 
-loadTestDirIO :: (MonadIO m, HasFileSystem m) => m (Either AppError FilePath)
+loadTestDirIO :: (MonadIO m, HasFileSystem m, HasLogger m) => m (Either AppError FilePath)
 loadTestDirIO = do
+  logInfo "load test dir..."
+
   currentDir <- getCurrentDirectory
   return $ Right (currentDir </> "test")
-
-sessionFilePathIO :: IO FilePath
-sessionFilePathIO = do
-  home <- liftIO getHomeDirectory
-  pure $ home </> ".local" </> "share" </> "atcoder-cli" </> "session.txt"
