@@ -30,6 +30,10 @@ import Network.HTTP.Req
 import Text.URI (URI)
 import Types
 
+---------------------------------------------
+-- Infra
+---------------------------------------------
+
 class (Monad m) => HasLogger m where
   logInfo :: String -> m ()
   logError :: String -> m ()
@@ -44,34 +48,8 @@ class (Monad m, MonadThrow m) => HasFileSystem m where
   doesFileExist :: FilePath -> m Bool
   removeFile :: FilePath -> m (Either AppError ())
 
-class (Monad m) => HasConfig m where
-  loadTestDir :: m (Either AppError FilePath)
-  loadSessionPath :: m (Either AppError FilePath)
-  loadTask :: m (Either AppError Task)
-
-class (Monad m) => HasSession m where
-  loadSession :: m (Either AppError Session)
-  saveSession :: Session -> m (Either AppError ())
-
-class (Monad m) => HasTestCase m where
-  loadTestCases :: m (Either AppError [TestCase])
-  saveTestCase :: TestCase -> m (Either AppError ())
-  reportTestResult :: (TestCase, RunTestCaseResult) -> m (Either AppError ())
-
-class (Monad m) => HasLanguage m where
-  detectLanguage :: m (Either AppError Language)
-  buildLanguage :: Language -> m (Either AppError ())
-  runTestCase :: Language -> TestCase -> m (Either AppError RunTestCaseResult)
-  cleanupBuiltFile :: Language -> m (Either AppError ())
-
 class (Monad m) => HasExecutor m where
   executeCmd :: Cmd -> Stdin -> m (Either AppError Stdout)
-
-class (Monad m) => HasAtcoder m where
-  fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
-  fetchTestCases :: Task -> m (Either AppError [TestCase])
-  verifySession :: Session -> m (Either AppError Bool)
-  submitPageUrl :: Task -> m URI
 
 class (Monad m) => MonadReq m where
   reqGet ::
@@ -102,6 +80,36 @@ class (Monad m) => HasClipboard m where
 
 class (Monad m) => HasBrowser m where
   openBrowser :: URI -> m (Either AppError ())
+
+---------------------------------------------
+-- Service
+---------------------------------------------
+
+class (Monad m) => HasConfig m where
+  loadTestDir :: m (Either AppError FilePath)
+  loadSessionPath :: m (Either AppError FilePath)
+  loadTask :: m (Either AppError Task)
+
+class (Monad m) => HasSession m where
+  loadSession :: m (Either AppError Session)
+  saveSession :: Session -> m (Either AppError ())
+
+class (Monad m) => HasTestCase m where
+  loadTestCases :: m (Either AppError [TestCase])
+  saveTestCase :: TestCase -> m (Either AppError ())
+  reportTestResult :: (TestCase, RunTestCaseResult) -> m (Either AppError ())
+
+class (Monad m) => HasLanguage m where
+  detectLanguage :: m (Either AppError Language)
+  buildLanguage :: Language -> m (Either AppError ())
+  runTestCase :: Language -> TestCase -> m (Either AppError RunTestCaseResult)
+  cleanupBuiltFile :: Language -> m (Either AppError ())
+
+class (Monad m) => HasAtcoder m where
+  fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
+  fetchTestCases :: Task -> m (Either AppError [TestCase])
+  verifySession :: Session -> m (Either AppError Bool)
+  submitPageUrl :: Task -> m URI
 
 class (Monad m) => HasUser m where
   sendMsg :: String -> m ()
