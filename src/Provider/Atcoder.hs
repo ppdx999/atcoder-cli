@@ -11,9 +11,11 @@ module Provider.Atcoder
     verifySessionIO,
     AtCoderEnv (..),
     createAtCoderEnv,
+    submitPageUrlIO,
   )
 where
 
+import Control.Monad.Catch (MonadThrow)
 import Control.Monad.Except (ExceptT (ExceptT), runExceptT)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Functor ((<&>))
@@ -26,6 +28,7 @@ import Interface (MonadReq (..))
 import Network.HTTP.Req (HttpConfig (..), defaultHttpConfig, ignoreResponse, responseStatusCode)
 import Text.HTML.TagSoup
 import Text.Regex.TDFA
+import Text.URI
 import Types
 
 data AtCoderEnv = AtCoderEnv
@@ -77,6 +80,16 @@ verifySessionIO _env session = runExceptT $ do
   let statusCode = responseStatusCode res
   liftIO $ TIO.putStrLn $ "Response Status Code: " <> T.pack (show statusCode)
   pure $ statusCode == 200
+
+submitPageUrlIO :: (MonadThrow m) => Task -> m URI
+submitPageUrlIO (Task (ContestId cid) (ProblemId pid)) =
+  mkURI $
+    "https://atcoder.jp/contests/"
+      <> cid
+      <> "/submit?taskScreenName="
+      <> T.replace "-" "_" cid
+      <> "_"
+      <> pid
 
 -- --- Page Fetching Helpers ---
 fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError T.Text)

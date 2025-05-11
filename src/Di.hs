@@ -10,7 +10,7 @@ module Di (runAppM) where
 
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
-import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
+import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, submitPageUrlIO, verifySessionIO)
 import Provider.Browser (openBrowserIO)
 import Provider.Clipboard (setClipboardIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
@@ -49,6 +49,7 @@ instance HasAtcoder IO where
   fetchProblemIds = fetchProblemIdsIO AtCoderEnv
   fetchTestCases = fetchTestCasesIO AtCoderEnv
   verifySession = verifySessionIO AtCoderEnv
+  submitPageUrl = submitPageUrlIO
 
 instance HasTestCase IO where
   loadTestCases = loadTestCasesIO
