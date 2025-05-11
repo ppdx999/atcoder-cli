@@ -156,15 +156,15 @@ parseTestCases body = do
 
     parseSamples :: T.Text -> [T.Text]
     parseSamples html =
-      go (parseTags (T.unpack html)) []
+      go' (parseTags (T.unpack html)) []
       where
-        go [] acc = acc
-        go (TagOpen "h3" _ : TagText heading : TagClose "h3" : rest) acc
+        go' [] acc = acc
+        go' (TagOpen "h3" _ : TagText heading : TagClose "h3" : rest) acc
           | "入力例" `isInfixOf` heading || "出力例" `isInfixOf` heading =
               case extractPre rest of
-                (Just content, rest') -> go rest' (acc ++ [content])
-                (Nothing, rest') -> go rest' acc
-        go (_ : xs) acc = go xs acc
+                (Just content, rest') -> go' rest' (acc ++ [content])
+                (Nothing, rest') -> go' rest' acc
+        go' (_ : xs) acc = go' xs acc
 
         extractPre (TagOpen "pre" _ : TagText content : TagClose "pre" : rest) =
           (Just $ T.pack content, rest)
