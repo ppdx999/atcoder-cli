@@ -29,6 +29,7 @@ import Network.HTTP.Req
     Option,
     Scheme (Https),
   )
+import Text.URI (URI)
 import Types
 
 class (Monad m) => HasLogger m where
@@ -72,7 +73,7 @@ class (Monad m) => HasAtcoder m where
   fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
   fetchTestCases :: Task -> m (Either AppError [TestCase])
   verifySession :: Session -> m (Either AppError Bool)
-  submitPageUrl :: Task -> m Text
+  submitPageUrl :: Task -> m URI
 
 class (Monad m) => MonadReq m where
   reqGet ::
@@ -102,7 +103,7 @@ class (Monad m) => HasClipboard m where
   setClipboard :: ByteString -> m (Either AppError ())
 
 class (Monad m) => HasBrowser m where
-  openBrowser :: Text -> m (Either AppError ())
+  openBrowser :: URI -> m (Either AppError ())
 
 class (Monad m) => HasUser m where
   sendMsg :: Text -> m ()
