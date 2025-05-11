@@ -1,9 +1,5 @@
--- test/Usecase/DownloadSpec.hs
-{-# LANGUAGE OverloadedStrings #-}
-
 module Usecase.DownloadSpec (spec) where
 
-import qualified Data.ByteString.Char8 as BSC
 import Mock
 import Test.Hspec
 import Types
@@ -14,12 +10,12 @@ spec = describe "Usecase.Download.download" $ do
   -- テストデータ準備
   let task = Task (ContestId "abc100") (ProblemId "a")
   let tc1Name = "sample1"
-  let tc1Input = BSC.pack "1 2\n"
-  let tc1Output = BSC.pack "3\n"
+  let tc1Input = "1 2\n"
+  let tc1Output = "3\n"
   let tc1 = TestCase tc1Name tc1Input tc1Output
   let tc2Name = "sample2"
-  let tc2Input = BSC.pack "10 20\n"
-  let tc2Output = BSC.pack "30\n"
+  let tc2Input = "10 20\n"
+  let tc2Output = "30\n"
   let tc2 = TestCase tc2Name tc2Input tc2Output
   let testCases = [tc1, tc2]
 

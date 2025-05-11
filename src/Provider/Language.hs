@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Provider.Language
   ( detectLanguageIO,
     c,
@@ -20,7 +18,6 @@ where
 import Control.Monad.Trans.Except (ExceptT (ExceptT), runExceptT)
 import Data.Functor ((<&>))
 import Data.Maybe (catMaybes, listToMaybe)
-import qualified Data.Text.Encoding as TEnc
 import Interface
 import System.FilePath (takeFileName)
 import Types
@@ -137,7 +134,7 @@ buildLanguageIO lang = do
   where
     showMsg :: (HasLogger m) => Stdout -> m (Either AppError ())
     showMsg (Stdout output) = do
-      logInfo $ "Building Language output: " <> TEnc.decodeUtf8 output
+      logInfo $ "Building Language output: " <> output
       return $ Right ()
 
 runTestCaseIO :: (HasExecutor m, HasLogger m) => Language -> TestCase -> m (Either AppError RunTestCaseResult)

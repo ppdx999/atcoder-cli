@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Provider.Atcoder
@@ -17,17 +16,16 @@ where
 
 import Control.Monad.Catch (MonadThrow)
 import Control.Monad.Except (ExceptT (ExceptT), runExceptT)
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Trans (MonadTrans (lift))
 import Data.Functor ((<&>))
-import Data.List (isInfixOf)
+import Data.List (isInfixOf, isPrefixOf)
 import qualified Data.List as List
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TEnc
-import qualified Data.Text.IO as TIO
-import Interface (MonadReq (..))
+import Interface
 import Network.HTTP.Req (HttpConfig (..), defaultHttpConfig, ignoreResponse, responseStatusCode)
+import Provider.Utils (dashToUnderscore, mkURI, takeWhileEnd)
 import Text.HTML.TagSoup
-import Text.URI
+import Text.URI (URI)
 import Types
 
 data AtCoderEnv = AtCoderEnv
@@ -41,9 +39,7 @@ createAtCoderEnv = pure AtCoderEnv {} -- 今は特に設定するものがない
 
 -- | Real IO implementation for fetchProblemList (骨格 - req + Regex 想定)
 fetchProblemIdsIO ::
-  ( MonadIO m,
-    MonadReq m
-  ) =>
+  (MonadIO m, MonadReq m, HasLogger m) =>
   AtCoderEnv ->
   ContestId ->
   m (Either AppError [ProblemId])
@@ -53,7 +49,7 @@ fetchProblemIdsIO env contestId =
 
 -- | Real IO implementation for fetchTestCases (骨格 - req + Regex 想定)
 fetchTestCasesIO ::
-  (MonadIO m, MonadReq m) =>
+  (MonadIO m, MonadReq m, HasLogger m) =>
   AtCoderEnv ->
   Task ->
   m (Either AppError [TestCase])
@@ -62,12 +58,12 @@ fetchTestCasesIO env task = do
     >>= either (pure . Left) parseTestCases
 
 verifySessionIO ::
-  (MonadIO m, MonadReq m) =>
+  (MonadIO m, MonadReq m, HasLogger m) =>
   AtCoderEnv ->
   Session ->
   m (Either AppError Bool)
 verifySessionIO _env session = runExceptT $ do
-  liftIO $ TIO.putStrLn "Verifying session with AtCoder..."
+  lift $ logInfo "Verifying session with AtCoder..."
   let url = "https://atcoder.jp/settings"
   let config =
         defaultHttpConfig
@@ -77,7 +73,7 @@ verifySessionIO _env session = runExceptT $ do
   res <- ExceptT $ reqGetWithSession session url ignoreResponse config mempty
 
   let statusCode = responseStatusCode res
-  liftIO $ TIO.putStrLn $ "Response Status Code: " <> T.pack (show statusCode)
+  lift $ logInfo $ "Response Status Code: " <> show statusCode
   pure $ statusCode == 200
 
 submitPageUrlIO :: (MonadThrow m) => Task -> m URI
@@ -86,33 +82,33 @@ submitPageUrlIO (Task (ContestId cid) (ProblemId pid)) =
     "https://atcoder.jp/contests/"
       <> cid
       <> "/submit?taskScreenName="
-      <> T.replace "-" "_" cid
+      <> dashToUnderscore cid
       <> "_"
       <> pid
 
 -- --- Page Fetching Helpers ---
-fetchTaskPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> ContestId -> m (Either AppError T.Text)
+fetchTaskPage :: (MonadIO m, MonadReq m, HasLogger m) => AtCoderEnv -> ContestId -> m (Either AppError String)
 fetchTaskPage _env (ContestId cid) = do
-  let url = "https://atcoder.jp/contests/" <> T.unpack cid <> "/tasks"
-  liftIO $ TIO.putStrLn $ "Fetching problems from: " <> T.pack url
+  let url = "https://atcoder.jp/contests/" <> cid <> "/tasks"
+  logInfo $ "Fetching problems from: " <> url
   getHtml url
 
-fetchProblemPage :: (MonadIO m, MonadReq m) => AtCoderEnv -> Task -> m (Either AppError T.Text)
+fetchProblemPage :: (MonadIO m, MonadReq m, HasLogger m) => AtCoderEnv -> Task -> m (Either AppError String)
 fetchProblemPage _env (Task (ContestId cid) (ProblemId pid)) = do
   let url =
         "https://atcoder.jp/contests/"
-          <> T.unpack cid
+          <> cid
           <> "/tasks/"
-          <> T.unpack (T.replace "-" "_" cid)
+          <> dashToUnderscore cid
           <> "_"
-          <> T.unpack pid
-  liftIO $ TIO.putStrLn $ "[Skeleton] Fetching test cases from: " <> T.pack url
+          <> pid
+  logInfo $ "[Skeleton] Fetching test cases from: " <> url
   getHtml url
 
 -- --- Parsing Helpers ---
-parseProblemIds :: (MonadIO m) => T.Text -> m (Either AppError [ProblemId])
+parseProblemIds :: (MonadIO m, HasLogger m) => String -> m (Either AppError [ProblemId])
 parseProblemIds html = do
-  liftIO $ TIO.putStrLn "Parsing HTML response for problem ids..."
+  logInfo "Parsing HTML response for problem ids..."
 
   return
     $ traverse validateProblemId
@@ -121,36 +117,36 @@ parseProblemIds html = do
       . filter isTaskLink
     $ parseTags html
   where
-    isTaskLink :: Tag T.Text -> Bool
+    isTaskLink :: Tag String -> Bool
     isTaskLink (TagOpen "a" attrs) =
       case lookup "href" attrs of
-        Just href -> "/contests/" `T.isPrefixOf` href && "/tasks/" `T.isInfixOf` href
+        Just href -> "/contests/" `isPrefixOf` href && "/tasks/" `isInfixOf` href
         Nothing -> False
     isTaskLink _ = False
 
-    extractId :: Tag T.Text -> T.Text
+    extractId :: Tag String -> String
     extractId (TagOpen "a" attrs) =
       case lookup "href" attrs of
-        Just href -> T.takeWhileEnd (/= '_') href
+        Just href -> takeWhileEnd (/= '_') href
         Nothing -> ""
     extractId _ = ""
 
-parseTestCases :: (MonadIO m) => T.Text -> m (Either AppError [TestCase])
+parseTestCases :: (MonadIO m, HasLogger m) => String -> m (Either AppError [TestCase])
 parseTestCases body = do
-  liftIO $ TIO.putStrLn "Parsing HTML response for test cases..."
+  logInfo "Parsing HTML response for test cases..."
   return $ go body
   where
-    go :: T.Text -> Either AppError [TestCase]
+    go :: String -> Either AppError [TestCase]
     go html =
       pairUp (parseSamples html)
         <&> map mkTestCase . zipPairs
 
-    mkTestCase :: (Int, (T.Text, T.Text)) -> TestCase
+    mkTestCase :: (Int, (String, String)) -> TestCase
     mkTestCase (i, (input, output)) =
       TestCase
-        { tcName = T.pack (show i),
-          tcInput = TEnc.encodeUtf8 input,
-          tcOutput = TEnc.encodeUtf8 output
+        { tcName = show i,
+          tcInput = input,
+          tcOutput = output
         }
 
     pairUp :: [a] -> Either AppError [(a, a)]
@@ -161,9 +157,9 @@ parseTestCases body = do
     zipPairs :: [(a, a)] -> [(Int, (a, a))]
     zipPairs = zip [1 ..]
 
-    parseSamples :: T.Text -> [T.Text]
+    parseSamples :: String -> [String]
     parseSamples html =
-      go' (parseTags (T.unpack html)) []
+      go' (parseTags html) []
       where
         go' [] acc = acc
         go' (TagOpen "h3" _ : TagText heading : TagClose "h3" : rest) acc
@@ -174,6 +170,6 @@ parseTestCases body = do
         go' (_ : xs) acc = go' xs acc
 
         extractPre (TagOpen "pre" _ : TagText content : TagClose "pre" : rest) =
-          (Just $ T.pack content, rest)
+          (Just content, rest)
         extractPre (_x : xs) = extractPre xs
         extractPre _ = (Nothing, [])

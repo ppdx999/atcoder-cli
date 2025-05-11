@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Provider.Req
@@ -13,16 +12,13 @@ module Provider.Req
 where
 
 import Control.Monad.Catch (MonadCatch)
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Trans (MonadTrans (lift))
 import Control.Monad.Trans.Except (ExceptT (ExceptT), runExceptT)
 import qualified Data.ByteString.Char8 as BSC
 import Data.Functor ((<&>))
 import Data.Proxy (Proxy)
-import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TEnc
-import qualified Data.Text.IO as TIO
-import Interface (HasSession (loadSession))
+import Interface (HasLogger (logInfo), HasSession (loadSession))
 import Network.HTTP.Req
   ( GET (GET),
     HttpConfig,
@@ -38,21 +34,19 @@ import Network.HTTP.Req
     runReq,
     useHttpsURI,
   )
-import Provider.Utils (maybeToExceptT, try)
-import Text.URI (mkURI)
+import Provider.Utils (crlfToLf, decodeUtf8, maybeToExceptT, mkURI, try)
 import Types
 
-normalizeHtml :: T.Text -> T.Text
-normalizeHtml =
-  T.replace "\r\n" "\n"
+normalizeHtml :: String -> String
+normalizeHtml = crlfToLf
 
-getHtmlIO :: (HasSession m, MonadIO m, MonadCatch m) => String -> m (Either AppError Text)
+getHtmlIO :: (HasSession m, HasLogger m, MonadIO m, MonadCatch m) => String -> m (Either AppError String)
 getHtmlIO url =
   reqGetIO url bsResponse defaultHttpConfig mempty
-    <&> fmap (normalizeHtml . TEnc.decodeUtf8 . responseBody)
+    <&> fmap (normalizeHtml . decodeUtf8 . responseBody)
 
 reqGetIO ::
-  (HasSession m, MonadIO m, MonadCatch m, HttpResponse r) =>
+  (HasSession m, HasLogger m, MonadIO m, MonadCatch m, HttpResponse r) =>
   String ->
   Proxy r ->
   HttpConfig ->
@@ -77,15 +71,15 @@ reqGetIO urlStr proxy config option = do
         option
 
 reqGetWithoutSessionIO ::
-  (MonadIO m, MonadCatch m, HttpResponse r) =>
+  (MonadIO m, HasLogger m, MonadCatch m, HttpResponse r) =>
   String ->
   Proxy r ->
   HttpConfig ->
   Option Https ->
   m (Either AppError r)
 reqGetWithoutSessionIO urlStr proxy config option = runExceptT $ do
-  liftIO $ TIO.putStrLn $ ">>> Performing HTTP GET Request: " <> T.pack urlStr
-  uri <- ExceptT $ try $ mkURI $ T.pack urlStr
+  lift $ logInfo $ ">>> Performing HTTP GET Request: " <> urlStr
+  uri <- ExceptT $ try $ mkURI urlStr
   (url, urlOpt) <- maybeToExceptT (ProviderError "Invalid URI for req") $ useHttpsURI uri
 
   ExceptT $
@@ -94,7 +88,7 @@ reqGetWithoutSessionIO urlStr proxy config option = runExceptT $ do
         req GET url NoReqBody proxy (urlOpt <> option)
 
 reqGetWithSessionIO ::
-  (MonadIO m, MonadCatch m, HttpResponse r) =>
+  (MonadIO m, HasLogger m, MonadCatch m, HttpResponse r) =>
   Session ->
   String ->
   Proxy r ->
@@ -102,9 +96,9 @@ reqGetWithSessionIO ::
   Option Https ->
   m (Either AppError r)
 reqGetWithSessionIO (Session session) urlStr proxy config option = runExceptT $ do
-  liftIO $ TIO.putStrLn $ ">>> Performing HTTP GET Request: " <> T.pack urlStr
-  let cookieHeader = header "Cookie" (BSC.pack $ "REVEL_SESSION=" <> T.unpack session)
-  uri <- ExceptT $ try $ mkURI $ T.pack urlStr
+  lift $ logInfo $ ">>> Performing HTTP GET Request: " <> urlStr
+  let cookieHeader = header (BSC.pack "Cookie") (BSC.pack $ "REVEL_SESSION=" <> session)
+  uri <- ExceptT $ try $ mkURI urlStr
   (url, urlOpt) <- maybeToExceptT (ProviderError "Invalid URI for req") $ useHttpsURI uri
 
   ExceptT $

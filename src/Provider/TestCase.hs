@@ -1,12 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Provider.TestCase (loadTestCasesIO, saveTestCaseIO, reportTestResultIO) where
 
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TEnc
 import Interface
 import System.FilePath (takeBaseName, takeExtension, (</>))
 import Types (AppError, RunTestCaseResult (RunTestCaseResult), TestCase (TestCase))
@@ -27,7 +23,7 @@ loadTestCasesIO = runExceptT $ do
         input <- ExceptT $ readFile inFile
         output <- ExceptT $ readFile outFile
 
-        pure $ TestCase (T.pack name) input output
+        pure $ TestCase name input output
     )
     names
 
@@ -38,13 +34,11 @@ saveTestCaseIO (TestCase tcName tcInput tcOutput) = runExceptT $ do
 
   ExceptT $ createDirectoryIfMissing True testDir
 
-  let inFile = testDir </> T.unpack tcName <> ".in"
-  let outFile = testDir </> T.unpack tcName <> ".out"
+  let inFile = testDir </> tcName <> ".in"
+  let outFile = testDir </> tcName <> ".out"
 
-  lift $ logInfo $ "Saving " <> T.pack inFile
   _ <- ExceptT $ saveFile inFile tcInput
 
-  lift $ logInfo $ "Saving " <> T.pack outFile
   ExceptT $ saveFile outFile tcOutput
 
 reportTestResultIO :: (HasUser m) => (TestCase, RunTestCaseResult) -> m (Either AppError ())
@@ -56,22 +50,21 @@ reportTestResultIO (TestCase name input want, RunTestCaseResult got) = do
     else do
       sendMsg $ "TestCase - " <> name <> " : Fail"
       sendMsg "Input:"
-      sendMsg $ visualizeWhitespace $ TEnc.decodeUtf8 input
+      sendMsg $ visualizeWhitespace input
       sendMsg ""
       sendMsg "Want:"
-      sendMsg $ visualizeWhitespace $ TEnc.decodeUtf8 want
+      sendMsg $ visualizeWhitespace want
       sendMsg ""
       sendMsg "Got:"
-      sendMsg $ visualizeWhitespace $ TEnc.decodeUtf8 got
+      sendMsg $ visualizeWhitespace got
       sendMsg ""
       pure $ Right ()
-
-visualizeWhitespace :: T.Text -> T.Text
-visualizeWhitespace =
-  T.concatMap replaceChar
   where
-    replaceChar c = case c of
-      ' ' -> "[SP]"
-      '\t' -> "[TAB]"
-      '\n' -> "[LF]\n"
-      _ -> T.singleton c
+    visualizeWhitespace =
+      concatMap replaceChar
+      where
+        replaceChar c = case c of
+          ' ' -> "[SP]"
+          '\t' -> "[TAB]"
+          '\n' -> "[LF]\n"
+          _ -> [c]

@@ -1,9 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO) where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
-import qualified Data.Text as T
 import Interface (HasFileSystem (getCurrentDirectory))
 import System.Directory (getHomeDirectory)
 import System.FilePath (pathSeparator, takeBaseName, takeDirectory, (</>))
@@ -25,11 +22,11 @@ loadTaskIO = do
       then
         Left
           ( ProviderError
-              ("Could not parse contest/problem ID from path: " <> T.pack currentDir)
+              ("Could not parse contest/problem ID from path: " <> currentDir)
           )
       else do
-        contestId <- validateContestId (T.pack cidStr)
-        problemId <- validateProblemId (T.pack pidStr)
+        contestId <- validateContestId cidStr
+        problemId <- validateProblemId pidStr
         Right Task {taskContestId = contestId, taskProblemId = problemId}
   where
     dropTrailingSeparator :: FilePath -> FilePath

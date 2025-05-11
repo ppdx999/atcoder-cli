@@ -22,16 +22,14 @@ module Types
   )
 where
 
-import Data.ByteString (ByteString)
-import qualified Data.Text as T
 import Data.Time (UTCTime)
 
 -- | Contest ID (e.g., "abc100")
-newtype ContestId = ContestId T.Text
+newtype ContestId = ContestId String
   deriving (Eq, Ord, Show)
 
 -- | Problem ID (e.g., "a", "b", "c")
-newtype ProblemId = ProblemId T.Text
+newtype ProblemId = ProblemId String
   deriving (Eq, Ord, Show)
 
 -- | Represents a specific problem within a contest
@@ -41,23 +39,21 @@ data Task = Task
   }
   deriving (Eq, Ord, Show)
 
-newtype RunTestCaseResult = RunTestCaseResult ByteString
+newtype RunTestCaseResult = RunTestCaseResult String
   deriving (Eq, Ord, Show)
 
--- | Session Cookie as raw text
-newtype Session = Session T.Text
+newtype Session = Session String
   deriving (Eq, Ord, Show)
 
--- | A single test case (input/output pair)
 data TestCase = TestCase
-  { tcName :: T.Text, -- e.g., "sample1"
-    tcInput :: ByteString,
-    tcOutput :: ByteString
+  { tcName :: String, -- e.g., "sample1"
+    tcInput :: String,
+    tcOutput :: String
   }
   deriving (Eq, Show)
 
 data Language = Language
-  { langName :: T.Text,
+  { langName :: String,
     sourceFile :: String,
     buildCmd :: Maybe Cmd,
     builtFile :: Maybe FilePath,
@@ -68,10 +64,10 @@ data Language = Language
 newtype Cmd = Cmd [String]
   deriving (Eq, Ord, Show)
 
-newtype Stdin = Stdin ByteString
+newtype Stdin = Stdin String
   deriving (Eq, Ord, Show)
 
-newtype Stdout = Stdout ByteString
+newtype Stdout = Stdout String
   deriving (Eq, Ord, Show)
 
 -- | Submission ID
@@ -100,38 +96,38 @@ data Submission = Submission
 
 -- | Types-layer errors
 data AppError
-  = InvalidContestId T.Text
-  | InvalidProblemId T.Text
-  | InvalidSession T.Text
+  = InvalidContestId String
+  | InvalidProblemId String
+  | InvalidSession String
   | SessionNotFound
-  | ProviderError T.Text
+  | ProviderError String
   deriving (Eq, Show)
 
 data OS = Linux | WSL | Mac | Windows deriving (Show, Eq)
 
-validateContestId :: T.Text -> Either AppError ContestId
+validateContestId :: String -> Either AppError ContestId
 validateContestId t
-  | T.null t = Left (InvalidContestId "Contest ID cannot be empty.")
-  | T.all validChar t = Right (ContestId t)
+  | null t = Left (InvalidContestId "Contest ID cannot be empty.")
+  | all validChar t = Right (ContestId t)
   | otherwise = Left (InvalidContestId ("Invalid characters in Contest ID: " <> t))
   where
-    validChars :: T.Text
+    validChars :: String
     validChars = "abcdefghijklmnopqrstuvwxyz0123456789-"
     validChar :: Char -> Bool
-    validChar c = T.any (== c) validChars
+    validChar c = c `elem` validChars
 
-validateProblemId :: T.Text -> Either AppError ProblemId
+validateProblemId :: String -> Either AppError ProblemId
 validateProblemId t
-  | T.null t = Left (InvalidProblemId "Problem ID cannot be empty.")
-  | T.all validChar t = Right (ProblemId t)
+  | null t = Left (InvalidProblemId "Problem ID cannot be empty.")
+  | all validChar t = Right (ProblemId t)
   | otherwise = Left (InvalidProblemId ("Invalid characters in Problem ID: " <> t))
   where
-    validChars :: T.Text
+    validChars :: String
     validChars = "abcdefghijklmnopqrstuvwxyz"
     validChar :: Char -> Bool
-    validChar c = T.any (== c) validChars
+    validChar c = c `elem` validChars
 
-validateSession :: T.Text -> Either AppError Session
+validateSession :: String -> Either AppError Session
 validateSession t
-  | T.null t = Left (InvalidSession "Session cannot be empty.")
+  | null t = Left (InvalidSession "Session cannot be empty.")
   | otherwise = Right (Session t)

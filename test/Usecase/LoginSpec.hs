@@ -1,7 +1,6 @@
 -- test/Usecase/LoginSpec.hs
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Usecase.LoginSpec (spec) where
 

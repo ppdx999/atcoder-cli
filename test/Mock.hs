@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Mock
   ( MockState (..),
@@ -15,18 +14,16 @@ where
 import Control.Monad.Catch (MonadThrow (..))
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.State.Strict (MonadState, StateT (..), gets, modify, runStateT)
-import Data.ByteString (ByteString)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Text (Text)
 import Interface
 import Types
 
 data MockState = MockState
-  { msLogs :: [Text],
-    msMsgs :: [Text],
+  { msLogs :: [String],
+    msMsgs :: [String],
     msCreatedDirs :: Set FilePath,
     msProblemIdsResult :: Either AppError [ProblemId],
     msCreateDirResult :: FilePath -> Either AppError (),
@@ -35,10 +32,10 @@ data MockState = MockState
     msCurrentDir :: FilePath,
     msTestCasesResult :: Either AppError [TestCase],
     msReadDir :: Either AppError [FilePath],
-    msReadFiles :: Either AppError ByteString,
-    msSaveFileResult :: FilePath -> ByteString -> Either AppError (),
-    msSavedFiles :: Map FilePath ByteString,
-    msStdinQueue :: [Text],
+    msReadFiles :: Either AppError String,
+    msSaveFileResult :: FilePath -> String -> Either AppError (),
+    msSavedFiles :: Map FilePath String,
+    msStdinQueue :: [String],
     msSessionPath :: Either AppError FilePath,
     msTestDir :: Either AppError FilePath,
     msTask :: Either AppError Task,

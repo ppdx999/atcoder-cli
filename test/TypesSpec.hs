@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module TypesSpec (spec) where
 
 import Data.Either (isLeft, isRight) -- isRight を追加

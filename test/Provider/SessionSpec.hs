@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Provider.SessionSpec (spec) where
 
 import qualified Data.Map as Map

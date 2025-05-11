@@ -20,9 +20,7 @@ module Interface
 where
 
 import Control.Monad.Catch (MonadThrow)
-import Data.ByteString (ByteString)
 import Data.Proxy (Proxy)
-import Data.Text (Text)
 import Network.HTTP.Req
   ( HttpConfig,
     HttpResponse,
@@ -33,15 +31,15 @@ import Text.URI (URI)
 import Types
 
 class (Monad m) => HasLogger m where
-  logInfo :: Text -> m ()
-  logError :: Text -> m ()
+  logInfo :: String -> m ()
+  logError :: String -> m ()
 
 class (Monad m, MonadThrow m) => HasFileSystem m where
   createDirectory :: FilePath -> m (Either AppError ())
   createDirectoryIfMissing :: Bool -> FilePath -> m (Either AppError ())
   getCurrentDirectory :: m FilePath
-  readFile :: FilePath -> m (Either AppError ByteString)
-  saveFile :: FilePath -> ByteString -> m (Either AppError ())
+  readFile :: FilePath -> m (Either AppError String)
+  saveFile :: FilePath -> String -> m (Either AppError ())
   readDir :: FilePath -> m (Either AppError [FilePath])
   doesFileExist :: FilePath -> m Bool
   removeFile :: FilePath -> m (Either AppError ())
@@ -91,19 +89,19 @@ class (Monad m) => MonadReq m where
     HttpConfig ->
     Option Https ->
     m (Either AppError r)
-  getHtml :: String -> m (Either AppError Text)
+  getHtml :: String -> m (Either AppError String)
 
 class (Monad m) => HasStdin m where
-  readLine :: m Text
+  readLine :: m String
 
 class (Monad m) => HasOs m where
   detectOs :: m OS
 
 class (Monad m) => HasClipboard m where
-  setClipboard :: ByteString -> m (Either AppError ())
+  setClipboard :: String -> m (Either AppError ())
 
 class (Monad m) => HasBrowser m where
   openBrowser :: URI -> m (Either AppError ())
 
 class (Monad m) => HasUser m where
-  sendMsg :: Text -> m ()
+  sendMsg :: String -> m ()

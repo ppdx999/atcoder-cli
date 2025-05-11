@@ -3,7 +3,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Provider.AtcoderSpec (spec) where
@@ -12,17 +11,16 @@ import Control.Monad.Catch (MonadThrow (..))
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.Identity (Identity (..))
 import Control.Monad.State.Strict (MonadState, StateT (..), evalStateT, gets, modify)
-import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Map.Strict as Map
-import qualified Data.Text as T
-import Interface (MonadReq (..))
+import qualified Data.String as T
+import Interface (HasLogger (..), MonadReq (..))
 import Provider.Atcoder
 import Test.Hspec
 import Types
 
 data MockReqState = MockReqState
-  { mockResponsesBody :: Map.Map String (Either AppError T.Text),
-    mockLogs :: [T.Text]
+  { mockResponsesBody :: Map.Map String (Either AppError T.String),
+    mockLogs :: [T.String]
   }
 
 newtype MockReq a = MockReq {runMockReq :: StateT MockReqState Identity a}
@@ -36,12 +34,16 @@ instance MonadIO MockReq where
 instance MonadThrow MockReq where
   throwM e = error $ "MonadThrow MockReq: Unexpected throwM: " ++ show e
 
+instance HasLogger MockReq where
+  logInfo _ = return ()
+  logError _ = return ()
+
 instance MonadReq MockReq where
   getHtml url = do
     responses <- gets mockResponsesBody
     case Map.lookup url responses of
       Just response -> pure response
-      Nothing -> pure $ Left (ProviderError $ "MockReq: No response defined for URL: " <> T.pack url)
+      Nothing -> pure $ Left (ProviderError $ "MockReq: No response defined for URL: " <> url)
 
 evalMockReq :: MockReq a -> MockReqState -> a
 evalMockReq action state = runIdentity (evalStateT (runMockReq action) state)
@@ -126,8 +128,8 @@ spec = describe "Provider.Atcoder" $ do
               ]
       let responses = Map.singleton url (Right dummyHtml)
       -- parseTestCasesWithRegex' が生成する TestCase (末尾に改行が追加される)
-      let tc1 = TestCase {tcName = "1", tcInput = BSC.pack "1 2\n", tcOutput = BSC.pack "3\n"}
-      let tc2 = TestCase {tcName = "2", tcInput = BSC.pack "10 20\n", tcOutput = BSC.pack "30\n20\n"}
+      let tc1 = TestCase {tcName = "1", tcInput = "1 2\n", tcOutput = "3\n"}
+      let tc2 = TestCase {tcName = "2", tcInput = "10 20\n", tcOutput = "30\n20\n"}
       let expected = Right [tc1, tc2]
       let initialMockState = MockReqState {mockResponsesBody = responses, mockLogs = []}
 
@@ -157,7 +159,7 @@ spec = describe "Provider.Atcoder" $ do
       let task = Task (ContestId "abc100") (ProblemId "a")
       let url = "https://atcoder.jp/contests/abc100/tasks/abc100_a"
       -- サンプルが含まれないHTML
-      let dummyHtml = T.pack "<html><body>No samples here</body></html>"
+      let dummyHtml = "<html><body>No samples here</body></html>"
       let responses = Map.singleton url (Right dummyHtml)
       -- parseTestCasesWithRegex' が空リストを返すことを期待
       let expected = Right []

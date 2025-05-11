@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Usecase.Submit (submit) where
 
 import Control.Monad.Trans (MonadTrans (lift))

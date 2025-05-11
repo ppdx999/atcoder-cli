@@ -4,7 +4,6 @@ import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans (MonadTrans (lift))
 import Control.Monad.Trans.Except (ExceptT (ExceptT), runExceptT)
 import Data.Functor ((<&>))
-import qualified Data.Text.Encoding as TEnc
 import Interface (HasConfig (..), HasFileSystem (..))
 import System.FilePath (takeDirectory)
 import Types (AppError (SessionNotFound), Session (..), validateSession)
@@ -18,7 +17,7 @@ loadSessionIO = runExceptT $ do
     if isExist
       then
         readFile sessionPath
-          <&> either Left (validateSession . TEnc.decodeUtf8)
+          <&> either Left validateSession
       else
         return (Left SessionNotFound)
 
@@ -26,4 +25,4 @@ saveSessionIO :: (MonadIO m, HasFileSystem m, HasConfig m) => Session -> m (Eith
 saveSessionIO (Session session) = runExceptT $ do
   sessionPath <- ExceptT loadSessionPath
   _ <- ExceptT $ createDirectoryIfMissing True $ takeDirectory sessionPath
-  ExceptT $ saveFile sessionPath $ TEnc.encodeUtf8 session
+  ExceptT $ saveFile sessionPath session

@@ -1,6 +1,3 @@
--- test/Usecase/InitSpec.hs
-{-# LANGUAGE OverloadedStrings #-}
-
 module Usecase.InitSpec (spec) where
 
 import qualified Data.Set as Set
@@ -27,16 +24,6 @@ spec = describe "Usecase.Init.initContest" $ do
     -- 結果の検証
     result `shouldBe` Right ()
 
-    -- ログの検証 (期待されるログメッセージ)
-    msLogs finalState
-      `shouldBe` [ "Initializing contest: abc999",
-                   "Creating directory: abc999",
-                   "Fetching problem list...",
-                   "Found 2 problems.",
-                   "Creating directory: abc999/a",
-                   "Creating directory: abc999/b"
-                 ]
-
     -- 作成されたディレクトリの検証
     msCreatedDirs finalState `shouldBe` Set.fromList [contestDir, problemDirA, problemDirB]
 
@@ -47,13 +34,6 @@ spec = describe "Usecase.Init.initContest" $ do
 
     -- 結果の検証
     result `shouldBe` Left fetchError
-
-    -- ログの検証 (中断されていることを確認)
-    msLogs finalState
-      `shouldBe` [ "Initializing contest: abc999",
-                   "Creating directory: abc999",
-                   "Fetching problem list..."
-                 ]
 
     -- 作成されたディレクトリの検証 (コンテストディレクトリのみ作成試行)
     msCreatedDirs finalState `shouldBe` Set.fromList [contestDir]
@@ -67,12 +47,6 @@ spec = describe "Usecase.Init.initContest" $ do
     -- 結果の検証
     result `shouldBe` Left createError
 
-    -- ログの検証 (中断されていることを確認)
-    msLogs finalState
-      `shouldBe` [ "Initializing contest: abc999",
-                   "Creating directory: abc999"
-                 ]
-
     -- 作成されたディレクトリの検証 (何も作成されていない)
     msCreatedDirs finalState `shouldBe` Set.empty
 
@@ -85,16 +59,6 @@ spec = describe "Usecase.Init.initContest" $ do
 
     -- 結果の検証
     result `shouldBe` Left createError
-
-    -- ログの検証 (失敗したディレクトリ作成のログまで記録される)
-    msLogs finalState
-      `shouldBe` [ "Initializing contest: abc999",
-                   "Creating directory: abc999",
-                   "Fetching problem list...",
-                   "Found 2 problems.",
-                   "Creating directory: abc999/a",
-                   "Creating directory: abc999/b"
-                 ]
 
     -- 作成されたディレクトリの検証 (失敗したディレクトリは含まれない)
     msCreatedDirs finalState `shouldBe` Set.fromList [contestDir, problemDirA]

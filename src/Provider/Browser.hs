@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Provider.Browser (openBrowserIO) where
 
 import Data.Functor (void, (<&>))

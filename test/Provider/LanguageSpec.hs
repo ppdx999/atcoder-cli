@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Provider.LanguageSpec (spec) where
 
 import Mock

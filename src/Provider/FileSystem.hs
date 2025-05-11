@@ -11,31 +11,30 @@ module Provider.FileSystem
 where
 
 import Control.Monad.IO.Class (liftIO)
-import qualified Data.ByteString as BS
 import Provider.Utils (try)
 import qualified System.Directory as Dir
 import Types (AppError (..))
 
 createDirectoryIO :: FilePath -> IO (Either AppError ())
-createDirectoryIO path = try (Dir.createDirectoryIfMissing True path)
+createDirectoryIO = try . Dir.createDirectoryIfMissing True
 
 createDirectoryIfMissingIO :: Bool -> FilePath -> IO (Either AppError ())
-createDirectoryIfMissingIO missing path = try (Dir.createDirectoryIfMissing missing path)
+createDirectoryIfMissingIO = (try .) . Dir.createDirectoryIfMissing
 
 getCurrentDirectoryIO :: IO FilePath
 getCurrentDirectoryIO = Dir.getCurrentDirectory
 
-readFileIO :: FilePath -> IO (Either AppError BS.ByteString)
-readFileIO path = try (BS.readFile path)
+readFileIO :: FilePath -> IO (Either AppError String)
+readFileIO = try . readFile
 
-saveFileIO :: FilePath -> BS.ByteString -> IO (Either AppError ())
-saveFileIO path content = try (BS.writeFile path content)
+saveFileIO :: FilePath -> String -> IO (Either AppError ())
+saveFileIO = (try .) . writeFile
 
 removeFileIO :: FilePath -> IO (Either AppError ())
 removeFileIO = try . Dir.removeFile
 
 readDirIO :: FilePath -> IO (Either AppError [FilePath])
-readDirIO path = try (Dir.getDirectoryContents path)
+readDirIO = try . Dir.getDirectoryContents
 
 doesFileExistIO :: FilePath -> IO Bool
-doesFileExistIO path = liftIO (Dir.doesFileExist path)
+doesFileExistIO = liftIO . Dir.doesFileExist

@@ -1,13 +1,9 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main (main) where
 
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 import Di ()
 import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
-import System.IO (stderr)
+import System.IO (hPrint, hPutStrLn, stderr)
 import Types (AppError (ProviderError), validateContestId)
 import Usecase.Download (download)
 import Usecase.Init (initContest)
@@ -17,12 +13,9 @@ import Usecase.Test (test)
 
 main :: IO ()
 main = do
-  getArgs >>= runMain . textize >>= showErr >>= exit
+  getArgs >>= runMain >>= showErr >>= exit
 
-textize :: [String] -> [T.Text]
-textize = map T.pack
-
-runMain :: [T.Text] -> IO (Either AppError ())
+runMain :: [String] -> IO (Either AppError ())
 runMain ["init", contestIdStr] =
   either (return . Left) initContest (validateContestId contestIdStr)
 runMain ["download"] = download
@@ -35,8 +28,8 @@ showErr :: Either AppError () -> IO (Either () ())
 showErr result = do
   case result of
     Left err -> do
-      TIO.hPutStrLn stderr "[Error]"
-      TIO.hPutStrLn stderr $ T.pack (show err)
+      hPutStrLn stderr "[Error]"
+      hPrint stderr err
       return $ Left ()
     Right () -> return $ Right ()
 
