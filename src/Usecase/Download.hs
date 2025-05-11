@@ -7,7 +7,7 @@ module Usecase.Download
 where
 
 import Control.Monad.Trans.Class (MonadTrans, lift)
-import Control.Monad.Trans.Except (ExceptT (..))
+import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
 import Interface
@@ -19,8 +19,8 @@ download ::
     HasConfig m,
     HasTestCase m
   ) =>
-  ExceptT AppError m ()
-download = do
+  m (Either AppError ())
+download = runExceptT $ do
   logInfoE "Starting download..."
 
   task@(Task (ContestId cid) (ProblemId pid)) <- ExceptT loadTask

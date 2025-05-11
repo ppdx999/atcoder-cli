@@ -5,7 +5,7 @@ module Usecase.Login (login) where
 import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans.Class (MonadTrans, lift)
-import Control.Monad.Trans.Except (ExceptT (ExceptT))
+import Control.Monad.Trans.Except (ExceptT (ExceptT), runExceptT)
 import qualified Data.Text as T
 import Interface
 import Types (AppError (..), Session (..), validateSession)
@@ -18,8 +18,8 @@ login ::
     HasSession m,
     HasUser m
   ) =>
-  ExceptT AppError m ()
-login = do
+  m (Either AppError ())
+login = runExceptT $ do
   logInfoE "Load Session"
   session <- lift loadSession
   case session of

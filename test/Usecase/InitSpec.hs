@@ -3,7 +3,6 @@
 
 module Usecase.InitSpec (spec) where
 
-import Control.Monad.Trans.Except (runExceptT)
 import qualified Data.Set as Set
 import Mock
 import System.FilePath ((</>))
@@ -23,7 +22,7 @@ spec = describe "Usecase.Init.initContest" $ do
 
   it "正常系: コンテストディレクトリと問題ディレクトリを作成し、ログを出力する" $ do
     let initialState = initialMockState {msProblemIdsResult = Right problems}
-    (result, finalState) <- execMockApp (runExceptT (initContest contestId)) initialState
+    (result, finalState) <- execMockApp (initContest contestId) initialState
 
     -- 結果の検証
     result `shouldBe` Right ()
@@ -44,7 +43,7 @@ spec = describe "Usecase.Init.initContest" $ do
   it "異常系: 問題リストの取得に失敗した場合、エラーを返し処理を中断する" $ do
     let fetchError = ProviderError "Network timeout"
     let initialState = initialMockState {msProblemIdsResult = Left fetchError}
-    (result, finalState) <- execMockApp (runExceptT (initContest contestId)) initialState
+    (result, finalState) <- execMockApp (initContest contestId) initialState
 
     -- 結果の検証
     result `shouldBe` Left fetchError
@@ -63,7 +62,7 @@ spec = describe "Usecase.Init.initContest" $ do
     let createError = ProviderError "Permission denied"
     let resultFunc path = if path == contestDir then Left createError else Right ()
     let initialState = initialMockState {msCreateDirResult = resultFunc}
-    (result, finalState) <- execMockApp (runExceptT (initContest contestId)) initialState
+    (result, finalState) <- execMockApp (initContest contestId) initialState
 
     -- 結果の検証
     result `shouldBe` Left createError
@@ -82,7 +81,7 @@ spec = describe "Usecase.Init.initContest" $ do
     -- problemDirB の作成時のみエラーを返すように設定
     let resultFunc path = if path == problemDirB then Left createError else Right ()
     let initialState = initialMockState {msProblemIdsResult = Right problems, msCreateDirResult = resultFunc}
-    (result, finalState) <- execMockApp (runExceptT (initContest contestId)) initialState
+    (result, finalState) <- execMockApp (initContest contestId) initialState
 
     -- 結果の検証
     result `shouldBe` Left createError

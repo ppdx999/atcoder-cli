@@ -3,7 +3,6 @@
 
 module Usecase.DownloadSpec (spec) where
 
-import Control.Monad.Trans.Except (runExceptT)
 import qualified Data.ByteString.Char8 as BSC
 import Mock
 import Test.Hspec
@@ -30,7 +29,7 @@ spec = describe "Usecase.Download.download" $ do
             { msTask = Right task,
               msTestCasesResult = Right testCases
             }
-    (result, finalState) <- execMockApp (runExceptT download) initialState
+    (result, finalState) <- execMockApp download initialState
 
     -- 結果の検証
     result `shouldBe` Right ()
@@ -45,7 +44,7 @@ spec = describe "Usecase.Download.download" $ do
             { msTask = errorTask,
               msTestCasesResult = Right testCases
             }
-    (result, finalState) <- execMockApp (runExceptT download) initialState
+    (result, finalState) <- execMockApp download initialState
 
     -- 結果の検証 (parseTaskFromPath が返すエラー)
     result `shouldBe` errorTask
@@ -60,7 +59,7 @@ spec = describe "Usecase.Download.download" $ do
             { msTask = Right task,
               msTestCasesResult = Left fetchError
             }
-    (result, finalState) <- execMockApp (runExceptT download) initialState
+    (result, finalState) <- execMockApp download initialState
 
     -- 結果の検証
     result `shouldBe` Left fetchError
@@ -76,7 +75,7 @@ spec = describe "Usecase.Download.download" $ do
               msTestCasesResult = Right testCases,
               msSaveTestCaseFn = \_ -> Left saveError
             }
-    (result, finalState) <- execMockApp (runExceptT download) initialState
+    (result, finalState) <- execMockApp download initialState
 
     -- 結果の検証
     result `shouldBe` Left saveError

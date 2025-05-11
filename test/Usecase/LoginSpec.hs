@@ -5,7 +5,6 @@
 
 module Usecase.LoginSpec (spec) where
 
-import Control.Monad.Trans.Except (runExceptT)
 import Mock
 import Test.Hspec
 import Types
@@ -25,7 +24,7 @@ spec = describe "Usecase.Login" $ do
                 msVerifySessionResultsQueue = [Right True]
               }
       -- Act
-      (result, finalState) <- execMockApp (runExceptT login) initialState
+      (result, finalState) <- execMockApp login initialState
       -- Assert
       result `shouldBe` Right ()
       last (msMsgs finalState) `shouldBe` "すでにログインしています"
@@ -40,7 +39,7 @@ spec = describe "Usecase.Login" $ do
                 msStdinQueue = [validSessionValue]
               }
       -- Act
-      (result, finalState) <- execMockApp (runExceptT login) initialState
+      (result, finalState) <- execMockApp login initialState
       -- Assert
       result `shouldBe` Right ()
       last (msMsgs finalState) `shouldBe` "ログインに成功しました"
@@ -56,7 +55,7 @@ spec = describe "Usecase.Login" $ do
                 msStdinQueue = [validSessionValue]
               }
       -- Act
-      (result, finalState) <- execMockApp (runExceptT login) initialState
+      (result, finalState) <- execMockApp login initialState
       -- Assert
       result `shouldBe` Right ()
       last (msMsgs finalState) `shouldBe` "ログインに成功しました"
@@ -71,7 +70,7 @@ spec = describe "Usecase.Login" $ do
                 msStdinQueue = ["invalid session"]
               }
       -- Act
-      (result, finalState) <- execMockApp (runExceptT login) initialState
+      (result, finalState) <- execMockApp login initialState
       -- Assert
       result `shouldBe` Right ()
       last (msMsgs finalState) `shouldBe` "ログインに失敗しました"

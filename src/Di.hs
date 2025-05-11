@@ -1,14 +1,10 @@
 -- src/App/Setup.hs
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
--- Orphan instance warning を抑制
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Di (runAppM) where
+module Di () where
 
-import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, submitPageUrlIO, verifySessionIO)
 import Provider.Browser (openBrowserIO)
@@ -24,7 +20,6 @@ import Provider.Session (loadSessionIO, saveSessionIO)
 import Provider.Stdin (readLineIO)
 import Provider.TestCase (loadTestCasesIO, reportTestResultIO, saveTestCaseIO)
 import Provider.User (sendMsgIO)
-import Types (AppError)
 
 instance HasLogger IO where
   logInfo = logInfoIO
@@ -88,6 +83,3 @@ instance HasClipboard IO where
 
 instance HasBrowser IO where
   openBrowser = openBrowserIO
-
-runAppM :: ExceptT AppError IO a -> IO (Either AppError a)
-runAppM = runExceptT

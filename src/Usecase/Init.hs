@@ -6,7 +6,7 @@ module Usecase.Init
 where
 
 import Control.Monad.Trans.Class (MonadTrans, lift)
-import Control.Monad.Trans.Except (ExceptT (ExceptT))
+import Control.Monad.Trans.Except (ExceptT (ExceptT), runExceptT)
 import Data.Foldable (traverse_)
 import qualified Data.Text as T
 import Interface
@@ -19,8 +19,8 @@ initContest ::
     HasLogger m
   ) =>
   ContestId ->
-  ExceptT AppError m ()
-initContest contestId@(ContestId contestIdText) = do
+  m (Either AppError ())
+initContest contestId@(ContestId contestIdText) = runExceptT $ do
   logInfoE $ "Initializing contest: " <> contestIdText
 
   logInfoE $ "Creating directory: " <> contestIdText
