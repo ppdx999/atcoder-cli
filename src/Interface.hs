@@ -15,6 +15,7 @@ module Interface
     HasUser (..),
     HasClipboard (..),
     HasBrowser (..),
+    HasOs (..),
   )
 where
 
@@ -94,8 +95,11 @@ class (Monad m) => MonadReq m where
 class (Monad m) => HasStdin m where
   readLine :: m Text
 
+class (Monad m) => HasOs m where
+  detectOs :: m OS
+
 class (Monad m) => HasClipboard m where
-  setClipboardBytestring :: ByteString -> m (Either AppError ())
+  setClipboard :: ByteString -> m (Either AppError ())
 
 class (Monad m) => HasBrowser m where
   openBrowser :: Text -> m (Either AppError ())

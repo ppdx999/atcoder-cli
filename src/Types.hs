@@ -18,6 +18,7 @@ module Types
     SubmissionState (..),
     Submission (..),
     AppError (..),
+    OS (..),
   )
 where
 
@@ -105,6 +106,8 @@ data AppError
   | SessionNotFound
   | ProviderError T.Text
   deriving (Eq, Show)
+
+data OS = Linux | WSL | Mac | Windows deriving (Show, Eq)
 
 validateContestId :: T.Text -> Either AppError ContestId
 validateContestId t

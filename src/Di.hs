@@ -11,11 +11,13 @@ module Di (runAppM) where
 import Control.Monad.Trans.Except (ExceptT, runExceptT)
 import Interface
 import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, verifySessionIO)
+import Provider.Clipboard (setClipboardIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
 import Provider.Executor (executeCmdIO)
 import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, removeFileIO, saveFileIO)
 import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO, runTestCaseIO)
 import Provider.Logger (logErrorIO, logInfoIO)
+import Provider.Os (detectOsIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
 import Provider.Stdin (readLineIO)
@@ -70,11 +72,17 @@ instance MonadReq IO where
   reqGetWithSession = reqGetWithSessionIO
   getHtml = getHtmlIO
 
+instance HasOs IO where
+  detectOs = detectOsIO
+
 instance HasStdin IO where
   readLine = readLineIO
 
 instance HasUser IO where
   sendMsg = sendMsgIO
+
+instance HasClipboard IO where
+  setClipboard = setClipboardIO
 
 runAppM :: ExceptT AppError IO a -> IO (Either AppError a)
 runAppM = runExceptT

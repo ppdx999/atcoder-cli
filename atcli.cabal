@@ -37,14 +37,17 @@ library
       Provider.Config
       Provider.Language
   other-modules:
+      Provider.Clipboard
       Provider.Executor
       Provider.FileSystem
       Provider.Logger
+      Provider.Os
       Provider.Req
       Provider.Stdin
       Provider.TestCase
       Provider.User
       Provider.Utils
+      Usecase.Submit
       Paths_atcli
   hs-source-dirs:
       src

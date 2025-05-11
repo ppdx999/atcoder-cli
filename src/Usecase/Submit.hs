@@ -13,7 +13,7 @@ submit = runExceptT $ do
   lift $ logInfo "Submit ..."
   lang <- ExceptT detectLanguage
   src <- ExceptT $ readFile (sourceFile lang)
-  ExceptT $ setClipboardBytestring src
+  ExceptT $ setClipboard src
 
   task <- ExceptT loadTask
   url <- lift $ submitPageUrl task
