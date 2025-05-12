@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Types
   ( ContestId (..),
     validateContestId,
