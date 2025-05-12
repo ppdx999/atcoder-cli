@@ -12,9 +12,6 @@ import Test.Hspec
 import TestUtils (isProviderError)
 import Types
 
-testEnv :: AtCoderEnv
-testEnv = AtCoderEnv {}
-
 spec :: Spec
 spec = describe "Provider.Atcoder" $ do
   describe "fetchProblemIdsIO" $ do
@@ -39,7 +36,7 @@ spec = describe "Provider.Atcoder" $ do
               }
 
       -- 2. Act: テスト対象関数の実行
-      (result, _finalState) <- execMockApp (fetchProblemIdsIO testEnv contest) initialState
+      (result, _finalState) <- execMockApp (fetchProblemIdsIO contest) initialState
 
       -- 3. Assert: 結果の検証
       result `shouldBe` Right [ProblemId "a", ProblemId "b", ProblemId "c"]
@@ -53,7 +50,7 @@ spec = describe "Provider.Atcoder" $ do
               }
 
       -- 2. Act
-      (result, _finalState) <- execMockApp (fetchProblemIdsIO testEnv contest) initialState
+      (result, _finalState) <- execMockApp (fetchProblemIdsIO contest) initialState
 
       -- 3. Assert
       result `shouldSatisfy` isProviderError
@@ -90,7 +87,7 @@ spec = describe "Provider.Atcoder" $ do
               }
 
       -- 2. Act
-      (result, _finalState) <- execMockApp (fetchTestCasesIO testEnv task) initialState
+      (result, _finalState) <- execMockApp (fetchTestCasesIO task) initialState
 
       -- 3. Assert
       result
@@ -108,7 +105,7 @@ spec = describe "Provider.Atcoder" $ do
               }
 
       -- 2. Act
-      (result, _finalState) <- execMockApp (fetchTestCasesIO testEnv task) initialState
+      (result, _finalState) <- execMockApp (fetchTestCasesIO task) initialState
 
       -- 3. Assert
       result `shouldSatisfy` isProviderError
@@ -123,7 +120,7 @@ spec = describe "Provider.Atcoder" $ do
               }
 
       -- 2. Act
-      (result, _finalState) <- execMockApp (fetchTestCasesIO testEnv task) initialState
+      (result, _finalState) <- execMockApp (fetchTestCasesIO task) initialState
 
       -- 3. Assert
       result `shouldBe` Right []
@@ -138,7 +135,7 @@ spec = describe "Provider.Atcoder" $ do
               }
 
       -- 2. Act
-      (result, _finalState) <- execMockApp (fetchTestCasesIO testEnv task) initialState
+      (result, _finalState) <- execMockApp (fetchTestCasesIO task) initialState
 
       -- 3. Assert
       result `shouldSatisfy` isProviderError

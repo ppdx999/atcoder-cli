@@ -8,8 +8,6 @@ module Provider.Atcoder
   ( fetchProblemIdsIO,
     fetchTestCasesIO,
     verifySessionIO,
-    AtCoderEnv (..),
-    createAtCoderEnv,
     submitPageUrlIO,
   )
 where
@@ -28,41 +26,29 @@ import Text.HTML.TagSoup
 import Text.URI (URI)
 import Types
 
-data AtCoderEnv = AtCoderEnv
-  {
-  }
-  deriving (Show)
-
--- | AtCoderEnv を初期化する IO アクション (現状は空)
-createAtCoderEnv :: (MonadIO m) => m AtCoderEnv
-createAtCoderEnv = pure AtCoderEnv {} -- 今は特に設定するものがない
-
 -- | Real IO implementation for fetchProblemList (骨格 - req + Regex 想定)
 fetchProblemIdsIO ::
   (MonadIO m, MonadReq m, HasLogger m) =>
-  AtCoderEnv ->
   ContestId ->
   m (Either AppError [ProblemId])
-fetchProblemIdsIO env contestId =
-  fetchTaskPage env contestId
+fetchProblemIdsIO contestId =
+  fetchTaskPage contestId
     >>= either (pure . Left) parseProblemIds
 
 -- | Real IO implementation for fetchTestCases (骨格 - req + Regex 想定)
 fetchTestCasesIO ::
   (MonadIO m, MonadReq m, HasLogger m) =>
-  AtCoderEnv ->
   Task ->
   m (Either AppError [TestCase])
-fetchTestCasesIO env task = do
-  fetchProblemPage env task
+fetchTestCasesIO task = do
+  fetchProblemPage task
     >>= either (pure . Left) parseTestCases
 
 verifySessionIO ::
   (MonadIO m, MonadReq m, HasLogger m) =>
-  AtCoderEnv ->
   Session ->
   m (Either AppError Bool)
-verifySessionIO _env session = runExceptT $ do
+verifySessionIO session = runExceptT $ do
   lift $ logInfo "Verifying session with AtCoder..."
   let url = "https://atcoder.jp/settings"
   let config =
@@ -87,14 +73,14 @@ submitPageUrlIO (Task (ContestId cid) (ProblemId pid)) =
       <> pid
 
 -- --- Page Fetching Helpers ---
-fetchTaskPage :: (MonadIO m, MonadReq m, HasLogger m) => AtCoderEnv -> ContestId -> m (Either AppError String)
-fetchTaskPage _env (ContestId cid) = do
+fetchTaskPage :: (MonadIO m, MonadReq m, HasLogger m) => ContestId -> m (Either AppError String)
+fetchTaskPage (ContestId cid) = do
   let url = "https://atcoder.jp/contests/" <> cid <> "/tasks"
   logInfo $ "Fetching problems from: " <> url
   getHtml url
 
-fetchProblemPage :: (MonadIO m, MonadReq m, HasLogger m) => AtCoderEnv -> Task -> m (Either AppError String)
-fetchProblemPage _env (Task (ContestId cid) (ProblemId pid)) = do
+fetchProblemPage :: (MonadIO m, MonadReq m, HasLogger m) => Task -> m (Either AppError String)
+fetchProblemPage (Task (ContestId cid) (ProblemId pid)) = do
   let url =
         "https://atcoder.jp/contests/"
           <> cid

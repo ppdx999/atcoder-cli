@@ -6,7 +6,7 @@
 module Di () where
 
 import Interface
-import Provider.Atcoder (AtCoderEnv (AtCoderEnv), fetchProblemIdsIO, fetchTestCasesIO, submitPageUrlIO, verifySessionIO)
+import Provider.Atcoder (fetchProblemIdsIO, fetchTestCasesIO, submitPageUrlIO, verifySessionIO)
 import Provider.Browser (openBrowserIO)
 import Provider.Clipboard (setClipboardIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
@@ -41,9 +41,9 @@ instance HasConfig IO where
   loadTask = loadTaskIO
 
 instance HasAtcoder IO where
-  fetchProblemIds = fetchProblemIdsIO AtCoderEnv
-  fetchTestCases = fetchTestCasesIO AtCoderEnv
-  verifySession = verifySessionIO AtCoderEnv
+  fetchProblemIds = fetchProblemIdsIO
+  fetchTestCases = fetchTestCasesIO
+  verifySession = verifySessionIO
   submitPageUrl = submitPageUrlIO
 
 instance HasTestCase IO where
