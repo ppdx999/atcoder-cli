@@ -1,3 +1,3 @@
 #!/bin/sh
 
-sudo cp $(stack path --local-install-root)/bin/atcli /usr/bin/
+cp $(stack path --local-install-root)/bin/atcli $HOME/.local/bin/atcli
