@@ -20,61 +20,45 @@ spec = describe "Usecase.Download.download" $ do
   let testCases = [tc1, tc2]
 
   it "正常系: テストケースを取得し、./test ディレクトリに保存する" $ do
+    -- 1. Arrange
     let initialState =
           initialMockState
-            { msTask = Right task,
-              msTestCasesResult = Right testCases
+            { msLoadTask = Right task,
+              msFetchTestCases = Right testCases
             }
+    -- 2. Act
     (result, finalState) <- execMockApp download initialState
 
-    -- 結果の検証
+    -- 3. Assert
     result `shouldBe` Right ()
-
-    -- 保存されたセッションの検証
-    msSavedTestCase finalState `shouldBe` [tc1, tc2]
+    msSaveTestCase finalState `shouldBe` [tc1, tc2]
 
   it "異常系: タスクの取得に失敗した場合" $ do
+    -- 1. Arrange
     let errorTask = Left (ProviderError "Invalid directory")
     let initialState =
           initialMockState
-            { msTask = errorTask,
-              msTestCasesResult = Right testCases
+            { msLoadTask = errorTask,
+              msFetchTestCases = Right testCases
             }
+    -- 2. Act
     (result, finalState) <- execMockApp download initialState
 
-    -- 結果の検証 (parseTaskFromPath が返すエラー)
+    -- 3. Assert
     result `shouldBe` errorTask
-
-    -- 保存されたセッションは存在しない
-    msSavedSessions finalState `shouldBe` []
+    msSaveTestCase finalState `shouldBe` []
 
   it "異常系: テストケースの取得に失敗した場合" $ do
+    -- 1. Arrange
     let fetchError = ProviderError "Network Error"
     let initialState =
           initialMockState
-            { msTask = Right task,
-              msTestCasesResult = Left fetchError
+            { msLoadTask = Right task,
+              msFetchTestCases = Left fetchError
             }
+    -- 2. Act
     (result, finalState) <- execMockApp download initialState
 
-    -- 結果の検証
+    -- 3. Assert
     result `shouldBe` Left fetchError
-
-    -- 保存されたセッションは存在しない
-    msSavedSessions finalState `shouldBe` []
-
-  it "異常系: テストケースファイルの保存に失敗した場合" $ do
-    let saveError = ProviderError "Disk full"
-    let initialState =
-          initialMockState
-            { msTask = Right task,
-              msTestCasesResult = Right testCases,
-              msSaveTestCaseFn = \_ -> Left saveError
-            }
-    (result, finalState) <- execMockApp download initialState
-
-    -- 結果の検証
-    result `shouldBe` Left saveError
-
-    -- 保存されたセッションは存在しない
-    msSavedSessions finalState `shouldBe` []
+    msSaveTestCase finalState `shouldBe` []

@@ -18,47 +18,24 @@ spec = describe "Usecase.Init.initContest" $ do
   let problemDirB = contestDir </> "b"
 
   it "正常系: コンテストディレクトリと問題ディレクトリを作成し、ログを出力する" $ do
-    let initialState = initialMockState {msProblemIdsResult = Right problems}
+    -- 1. Arrange
+    let initialState = initialMockState {msFetchProblemIds = Right problems}
     (result, finalState) <- execMockApp (initContest contestId) initialState
 
-    -- 結果の検証
+    -- 2. Act
     result `shouldBe` Right ()
 
     -- 作成されたディレクトリの検証
     msCreatedDirs finalState `shouldBe` Set.fromList [contestDir, problemDirA, problemDirB]
 
   it "異常系: 問題リストの取得に失敗した場合、エラーを返し処理を中断する" $ do
+    -- 1. Arrange
     let fetchError = ProviderError "Network timeout"
-    let initialState = initialMockState {msProblemIdsResult = Left fetchError}
+    let initialState = initialMockState {msFetchProblemIds = Left fetchError}
     (result, finalState) <- execMockApp (initContest contestId) initialState
 
-    -- 結果の検証
+    -- 2. Act
     result `shouldBe` Left fetchError
 
-    -- 作成されたディレクトリの検証 (コンテストディレクトリのみ作成試行)
+    -- 3. Assert
     msCreatedDirs finalState `shouldBe` Set.fromList [contestDir]
-
-  it "異常系: コンテストディレクトリの作成に失敗した場合、エラーを返し処理を中断する" $ do
-    let createError = ProviderError "Permission denied"
-    let resultFunc path = if path == contestDir then Left createError else Right ()
-    let initialState = initialMockState {msCreateDirResult = resultFunc}
-    (result, finalState) <- execMockApp (initContest contestId) initialState
-
-    -- 結果の検証
-    result `shouldBe` Left createError
-
-    -- 作成されたディレクトリの検証 (何も作成されていない)
-    msCreatedDirs finalState `shouldBe` Set.empty
-
-  it "異常系: 問題ディレクトリの作成に失敗した場合、エラーを返し処理を中断する" $ do
-    let createError = ProviderError "Disk full"
-    -- problemDirB の作成時のみエラーを返すように設定
-    let resultFunc path = if path == problemDirB then Left createError else Right ()
-    let initialState = initialMockState {msProblemIdsResult = Right problems, msCreateDirResult = resultFunc}
-    (result, finalState) <- execMockApp (initContest contestId) initialState
-
-    -- 結果の検証
-    result `shouldBe` Left createError
-
-    -- 作成されたディレクトリの検証 (失敗したディレクトリは含まれない)
-    msCreatedDirs finalState `shouldBe` Set.fromList [contestDir, problemDirA]

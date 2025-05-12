@@ -19,57 +19,57 @@ spec = describe "Usecase.Login" $ do
       -- Arrange
       let initialState =
             initialMockState
-              { msLoadSessionResult = Right validSession,
-                msVerifySessionResultsQueue = [Right True]
+              { msLoadSession = Right validSession,
+                msVerifySession = [Right True]
               }
       -- Act
       (result, finalState) <- execMockApp login initialState
       -- Assert
       result `shouldBe` Right ()
-      last (msMsgs finalState) `shouldBe` "すでにログインしています"
+      last (msSendMsg finalState) `shouldBe` "すでにログインしています"
+      msSaveSession finalState `shouldBe` []
 
     it "セッションファイルが存在しない場合、標準入力からセッションを受け取り、検証・保存する" $ do
       -- Arrange
       let initialState =
             initialMockState
-              { msLoadSessionResult = Left SessionNotFound,
-                msSaveSessionResult = \_ -> Right (),
-                msVerifySessionResultsQueue = [Right True],
-                msStdinQueue = [validSessionValue]
+              { msLoadSession = Left SessionNotFound,
+                msVerifySession = [Right True],
+                msReadLine = [validSessionValue]
               }
       -- Act
       (result, finalState) <- execMockApp login initialState
       -- Assert
       result `shouldBe` Right ()
-      last (msMsgs finalState) `shouldBe` "ログインに成功しました"
-      msSavedSessions finalState `shouldBe` [validSession]
+      last (msSendMsg finalState) `shouldBe` "ログインに成功しました"
+      msSaveSession finalState `shouldBe` [validSession]
 
     it "セッションファイルが存在しても、検証に失敗したら再度ログイン処理を試みる" $ do
       -- Arrange
       let initialState =
             initialMockState
-              { msLoadSessionResult = Right (Session "old session"),
-                msSaveSessionResult = \_ -> Right (),
-                msVerifySessionResultsQueue = [Right False, Right True],
-                msStdinQueue = [validSessionValue]
+              { msLoadSession = Right (Session "old session"),
+                msVerifySession = [Right False, Right True],
+                msReadLine = [validSessionValue]
               }
       -- Act
       (result, finalState) <- execMockApp login initialState
       -- Assert
       result `shouldBe` Right ()
-      last (msMsgs finalState) `shouldBe` "ログインに成功しました"
-      msSavedSessions finalState `shouldBe` [validSession]
+      last (msSendMsg finalState) `shouldBe` "ログインに成功しました"
+      msSaveSession finalState `shouldBe` [validSession]
 
     it "標準入力から受け取ったセッションで検証に失敗したらログイン失敗と表示される" $ do
       -- Arrange
       let initialState =
             initialMockState
-              { msLoadSessionResult = Left SessionNotFound,
-                msVerifySessionResultsQueue = [Right False],
-                msStdinQueue = ["invalid session"]
+              { msLoadSession = Left SessionNotFound,
+                msVerifySession = [Right False],
+                msReadLine = ["invalid session"]
               }
       -- Act
       (result, finalState) <- execMockApp login initialState
       -- Assert
       result `shouldBe` Right ()
-      last (msMsgs finalState) `shouldBe` "ログインに失敗しました"
+      last (msSendMsg finalState) `shouldBe` "ログインに失敗しました"
+      msSaveSession finalState `shouldBe` []

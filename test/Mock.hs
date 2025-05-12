@@ -18,61 +18,151 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
+import qualified Data.Text as T
 import Interface
+import Text.URI (URI, mkURI)
 import Types
 
 data MockState = MockState
-  { msLogs :: [String],
-    msMsgs :: [String],
-    msCreatedDirs :: Set FilePath,
-    msProblemIdsResult :: Either AppError [ProblemId],
-    msCreateDirResult :: FilePath -> Either AppError (),
-    msCreateDirIfMissing :: Bool -> FilePath -> Either AppError (),
-    msDoesFileExistQueue :: [Bool],
-    msCurrentDir :: FilePath,
-    msTestCasesResult :: Either AppError [TestCase],
+  { -- Mock HasFileSystem--------------------------
+    msCreatedDirs :: Set FilePath, -- createDirectory and createDirectoryIfMissing
+    msGetCurrentDirectory :: FilePath,
+    msReadFile :: Either AppError String,
+    msSaveFile :: Map FilePath String,
     msReadDir :: Either AppError [FilePath],
-    msReadFiles :: Either AppError String,
-    msSaveFileResult :: FilePath -> String -> Either AppError (),
-    msSavedFiles :: Map FilePath String,
-    msStdinQueue :: [String],
-    msSessionPath :: Either AppError FilePath,
-    msTestDir :: Either AppError FilePath,
-    msTask :: Either AppError Task,
-    msSaveTestCaseFn :: TestCase -> Either AppError (),
-    msSavedTestCase :: [TestCase],
-    msLoadSessionResult :: Either AppError Session,
-    msSaveSessionResult :: Session -> Either AppError (),
-    msSavedSessions :: [Session],
-    msVerifySessionResultsQueue :: [Either AppError Bool]
+    msDoesFileExist :: [Bool],
+    msRemoveFile :: Either AppError (),
+    -----------------------------------------------
+
+    -- Mock HasExecutor ---------------------------
+    msExecuteCmd :: Either AppError Stdout,
+    -----------------------------------------------
+
+    -- Mock MonadReq ---------------------------
+    msGetHtml :: Either AppError String,
+    -----------------------------------------------
+
+    -- Mock HasStdin ---------------------------
+    msReadLine :: [String],
+    -----------------------------------------------
+
+    -- Mock HasOs ------------------------------
+    msDetectOs :: OS,
+    -----------------------------------------------
+
+    -- Mock HasClipboard -----------------------
+    msSetClipboard :: [String],
+    -----------------------------------------------
+
+    -- Mock HasBrowser -------------------------
+    msOpenBrowser :: [URI],
+    -----------------------------------------------
+
+    -- Mock HasConfig --------------------------
+    msLoadTestDir :: Either AppError FilePath,
+    msLoadSessionPath :: Either AppError FilePath,
+    msLoadTask :: Either AppError Task,
+    -----------------------------------------------
+
+    -- Mock HasSession -------------------------
+    msLoadSession :: Either AppError Session,
+    msSaveSession :: [Session],
+    -----------------------------------------------
+
+    -- Mock HasTestCase ------------------------
+    msLoadTestCases :: Either AppError [TestCase],
+    msSaveTestCase :: [TestCase],
+    -----------------------------------------------
+
+    -- Mock HasLanguage ------------------------
+    msDetectLanguage :: Either AppError Language,
+    msBuildLanguage :: Either AppError (),
+    msRunTestCase :: Either AppError RunTestCaseResult,
+    msCleanupBuiltFile :: Either AppError (),
+    -----------------------------------------------
+
+    -- Mock HasAtcoder -------------------------
+    msFetchProblemIds :: Either AppError [ProblemId],
+    msFetchTestCases :: Either AppError [TestCase],
+    msVerifySession :: [Either AppError Bool],
+    msSubmitPageUrl :: String,
+    -----------------------------------------------
+
+    -- Mock HasUser--------------------------------
+    msSendMsg :: [String]
+    -----------------------------------------------
   }
 
 initialMockState :: MockState
 initialMockState =
   MockState
-    { msLogs = [],
-      msMsgs = [],
+    { -- Mock HasFileSystem--------------------------
       msCreatedDirs = Set.empty,
-      msProblemIdsResult = Right [],
-      msCreateDirResult = \_ -> Right (),
-      msCreateDirIfMissing = \_ _ -> Right (),
-      msDoesFileExistQueue = [True],
-      msCurrentDir = "/tmp/abc100/a",
-      msTestCasesResult = Right [],
-      msReadDir = Right [],
-      msReadFiles = Right "fileData",
-      msSaveFileResult = \_ _ -> Right (),
-      msSavedFiles = Map.empty,
-      msStdinQueue = [],
-      msSessionPath = Right "/tmp/session.txt",
-      msTestDir = Right "/tmp/abc100/a/test",
-      msTask = Right (Task (ContestId "abc100") (ProblemId "a")),
-      msSaveTestCaseFn = \_ -> Right (),
-      msSavedTestCase = [],
-      msLoadSessionResult = Left SessionNotFound,
-      msSaveSessionResult = \_ -> Right (),
-      msSavedSessions = [],
-      msVerifySessionResultsQueue = [Right False]
+      msGetCurrentDirectory = "",
+      msReadFile = Left (ProviderError "uninitialized msReadFile"),
+      msSaveFile = Map.empty,
+      msReadDir = Left (ProviderError "uninitialized msReadDir"),
+      msDoesFileExist = [],
+      msRemoveFile = Left (ProviderError "uninitialized msRemoveFile"),
+      -----------------------------------------------
+
+      -- Mock HasExecutor ---------------------------
+      msExecuteCmd = Left (ProviderError "uninitialized msExecuteCmd"),
+      -----------------------------------------------
+
+      -- Mock MonadReq ---------------------------
+      msGetHtml = Left (ProviderError "uninitialized msGetHtml"),
+      -----------------------------------------------
+
+      -- Mock HasStdin ---------------------------
+      msReadLine = [],
+      -----------------------------------------------
+
+      -- Mock HasOs ------------------------------
+      msDetectOs = Linux, -- 適当な初期値（必要に応じて Windows 等に変更）
+      -----------------------------------------------
+
+      -- Mock HasClipboard -----------------------
+      msSetClipboard = [],
+      -----------------------------------------------
+
+      -- Mock HasBrowser -------------------------
+      msOpenBrowser = [],
+      -----------------------------------------------
+
+      -- Mock HasConfig --------------------------
+      msLoadTestDir = Left (ProviderError "uninitialized msLoadTestDir"),
+      msLoadSessionPath = Left (ProviderError "uninitialized msLoadSessionPath"),
+      msLoadTask = Left (ProviderError "uninitialized msLoadTask"),
+      -----------------------------------------------
+
+      -- Mock HasSession -------------------------
+      msLoadSession = Left (ProviderError "uninitialized msLoadSession"),
+      msSaveSession = [],
+      -----------------------------------------------
+
+      -- Mock HasTestCase ------------------------
+      msLoadTestCases = Left (ProviderError "uninitialized msLoadTestCases"),
+      msSaveTestCase = [],
+      -----------------------------------------------
+
+      -- Mock HasLanguage ------------------------
+      msDetectLanguage = Left (ProviderError "uninitialized msDetectLanguage"),
+      msBuildLanguage = Left (ProviderError "uninitialized msBuildLanguage"),
+      msRunTestCase = Left (ProviderError "uninitialized msRunTestCase"),
+      msCleanupBuiltFile = Left (ProviderError "uninitialized msCleanupBuiltFile"),
+      -----------------------------------------------
+
+      -- Mock HasAtcoder -------------------------
+      msFetchProblemIds = Left (ProviderError "uninitialized msFetchProblemIds"),
+      msFetchTestCases = Left (ProviderError "uninitialized msFetchTestCases"),
+      msVerifySession = [Left (ProviderError "uninitialized msVerifySession")],
+      msSubmitPageUrl = "https://example.com",
+      -----------------------------------------------
+
+      -- Mock HasUser--------------------------------
+      msSendMsg = []
+      -----------------------------------------------
     }
 
 newtype MockApp a = MockApp {runMockApp :: StateT MockState IO a}
@@ -88,88 +178,100 @@ newtype MockApp a = MockApp {runMockApp :: StateT MockState IO a}
 execMockApp :: MockApp a -> MockState -> IO (a, MockState)
 execMockApp = runStateT . runMockApp
 
+---------------------------------------------
+-- Infra
+---------------------------------------------
 instance HasLogger MockApp where
-  logInfo msg = modify $ \s -> s {msLogs = msLogs s ++ [msg]}
-  logError msg = modify $ \s -> s {msLogs = msLogs s ++ ["[ERROR] " <> msg]}
+  logInfo _msg = return ()
+  logError _msg = return ()
 
 instance HasFileSystem MockApp where
   createDirectory path = do
-    resultFunc <- gets msCreateDirResult
-    case resultFunc path of
-      Right () -> do
-        modify $ \s -> s {msCreatedDirs = Set.insert path (msCreatedDirs s)}
-        pure $ Right ()
-      Left err -> pure $ Left err
+    modify $ \s -> s {msCreatedDirs = Set.insert path (msCreatedDirs s)}
+    pure $ Right ()
 
-  createDirectoryIfMissing missing path = do
-    resultFunc <- gets msCreateDirIfMissing
-    case resultFunc missing path of
-      Right () -> do
-        modify $ \s -> s {msCreatedDirs = Set.insert path (msCreatedDirs s)}
-        pure $ Right ()
-      Left err -> pure $ Left err
+  createDirectoryIfMissing _missing path = do
+    modify $ \s -> s {msCreatedDirs = Set.insert path (msCreatedDirs s)}
+    pure $ Right ()
 
+  getCurrentDirectory = gets msGetCurrentDirectory
+  readFile _filePath = gets msReadFile
+  saveFile path content = do
+    modify $ \s -> s {msSaveFile = Map.insert path content (msSaveFile s)}
+    pure $ Right ()
+  readDir _filePath = gets msReadDir
   doesFileExist _path = do
-    queue <- gets msDoesFileExistQueue
+    queue <- gets msDoesFileExist
     case queue of
       [] -> error "MockApp: doesFileExist called on empty queue"
       (x : xs) -> do
-        modify $ \s -> s {msDoesFileExistQueue = xs}
+        modify $ \s -> s {msDoesFileExist = xs}
         pure x
-  getCurrentDirectory = gets msCurrentDir
-  readFile _filePath = gets msReadFiles
-  readDir _filePath = gets msReadDir
-  saveFile path content = do
-    resultFunc <- gets msSaveFileResult
-    case resultFunc path content of
-      Right () -> do
-        modify $ \s -> s {msSavedFiles = Map.insert path content (msSavedFiles s)}
-        pure $ Right ()
-      Left err -> pure $ Left err
 
-instance HasConfig MockApp where
-  loadSessionPath = gets msSessionPath
-  loadTestDir = gets msTestDir
-  loadTask = gets msTask
-
-instance HasSession MockApp where
-  loadSession = gets msLoadSessionResult
-  saveSession session = do
-    resultFunc <- gets msSaveSessionResult
-    case resultFunc session of
-      Right () -> do
-        modify $ \s -> s {msSavedSessions = msSavedSessions s ++ [session]}
-        pure $ Right ()
-      Left err -> pure $ Left err
-
-instance HasTestCase MockApp where
-  saveTestCase tc = do
-    fn <- gets msSaveTestCaseFn
-    case fn tc of
-      Right () -> do
-        modify $ \s -> s {msSavedTestCase = msSavedTestCase s ++ [tc]}
-        pure $ Right ()
-      Left err -> pure $ Left err
-
-instance HasAtcoder MockApp where
-  fetchProblemIds _contestId = gets msProblemIdsResult
-  fetchTestCases _task = gets msTestCasesResult
-  verifySession _session = do
-    queue <- gets msVerifySessionResultsQueue
-    case queue of
-      [] -> error "MockApp: verifySession called but no results in queue"
-      (r : rs) -> do
-        modify $ \s -> s {msVerifySessionResultsQueue = rs}
-        pure r
+instance MonadReq MockApp where
+  getHtml _url = gets msGetHtml
 
 instance HasStdin MockApp where
   readLine = do
-    queue <- gets msStdinQueue
+    queue <- gets msReadLine
     case queue of
       [] -> error "MockApp: readLine called on empty stdin queue"
       (x : xs) -> do
-        modify $ \s -> s {msStdinQueue = xs}
+        modify $ \s -> s {msReadLine = xs}
         pure x
 
+instance HasOs MockApp where
+  detectOs = gets msDetectOs
+
+instance HasClipboard MockApp where
+  setClipboard content = do
+    modify $ \s -> s {msSetClipboard = msSetClipboard s ++ [content]}
+    pure $ Right ()
+
+instance HasBrowser MockApp where
+  openBrowser uri = do
+    modify $ \s -> s {msOpenBrowser = uri : msOpenBrowser s}
+    pure $ Right ()
+
+---------------------------------------------
+-- Service
+---------------------------------------------
+
+instance HasConfig MockApp where
+  loadSessionPath = gets msLoadSessionPath
+  loadTestDir = gets msLoadTestDir
+  loadTask = gets msLoadTask
+
+instance HasSession MockApp where
+  loadSession = gets msLoadSession
+  saveSession session = do
+    modify $ \s -> s {msSaveSession = msSaveSession s ++ [session]}
+    pure $ Right ()
+
+instance HasTestCase MockApp where
+  saveTestCase tc = do
+    modify $ \s -> s {msSaveTestCase = msSaveTestCase s ++ [tc]}
+    pure $ Right ()
+
+instance HasLanguage MockApp where
+  detectLanguage = gets msDetectLanguage
+  buildLanguage _language = gets msBuildLanguage
+  runTestCase _language _tcs = gets msRunTestCase
+  cleanupBuiltFile _language = gets msCleanupBuiltFile
+
+instance HasAtcoder MockApp where
+  fetchProblemIds _contestId = gets msFetchProblemIds
+  fetchTestCases _task = gets msFetchTestCases
+  verifySession _session = do
+    queue <- gets msVerifySession
+    case queue of
+      [] -> error "MockApp: verifySession called on empty queue"
+      (x : xs) -> do
+        modify $ \s -> s {msVerifySession = xs}
+        pure x
+  submitPageUrl _task = do
+    url <- gets msSubmitPageUrl
+    mkURI (T.pack url)
+
 instance HasUser MockApp where
-  sendMsg msg = modify $ \s -> s {msMsgs = msMsgs s ++ [msg]}
+  sendMsg msg = modify $ \s -> s {msSendMsg = msSendMsg s ++ [msg]}
