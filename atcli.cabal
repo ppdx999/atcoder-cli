@@ -109,6 +109,7 @@ test-suite atcli-test
       Usecase.DownloadSpec
       Usecase.InitSpec
       Usecase.LoginSpec
+      Usecase.TestSpec
       Paths_atcli
   hs-source-dirs:
       test
