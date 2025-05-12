@@ -11,6 +11,7 @@ import TypesSpec qualified
 import Usecase.DownloadSpec qualified
 import Usecase.InitSpec qualified
 import Usecase.LoginSpec qualified
+import Usecase.TestSpec qualified
 
 main :: IO ()
 main = hspec $ do
@@ -18,6 +19,7 @@ main = hspec $ do
   describe "Usecase.Init" Usecase.InitSpec.spec
   describe "Usecase.Download" Usecase.DownloadSpec.spec
   describe "Usecase.Login" Usecase.LoginSpec.spec
+  describe "Usecase.Test" Usecase.TestSpec.spec
   describe "Provider.Atcoder" Provider.AtcoderSpec.spec
   describe "Provider.Session" Provider.SessionSpec.spec
   describe "Provider.Config" Provider.ConfigSpec.spec
