@@ -22,7 +22,22 @@ runMain ["download"] = download
 runMain ["login"] = login
 runMain ["test"] = test
 runMain ["submit"] = submit
-runMain _ = return $ Left $ ProviderError "Invalid arguments: Usage: atcli <contest-id>"
+runMain _ =
+  return $
+    Left $
+      ProviderError $
+        unlines
+          [ "Invalid arguments: Usage:",
+            "atcli <command>",
+            "",
+            "command:",
+            "  init <contestId>",
+            "  download",
+            "  login",
+            "  test",
+            "  submit",
+            ""
+          ]
 
 showErr :: Either AppError () -> IO (Either () ())
 showErr result = do
