@@ -72,13 +72,15 @@ data MockState = MockState
     -- Mock HasTestCase ------------------------
     msLoadTestCases :: Either AppError [TestCase],
     msSaveTestCase :: [TestCase],
+    msReportTestResult :: [(TestCase, RunTestCaseResult)],
     -----------------------------------------------
 
     -- Mock HasLanguage ------------------------
     msDetectLanguage :: Either AppError Language,
-    msBuildLanguage :: Either AppError (),
-    msRunTestCase :: Either AppError RunTestCaseResult,
-    msCleanupBuiltFile :: Either AppError (),
+    msBuildLanguage :: [Language],
+    msRunTestCaseArgs :: [(Language, TestCase)],
+    msRunTestCaseResult :: Either AppError RunTestCaseResult,
+    msCleanupBuiltFile :: [Language],
     -----------------------------------------------
 
     -- Mock HasAtcoder -------------------------
@@ -144,13 +146,15 @@ initialMockState =
       -- Mock HasTestCase ------------------------
       msLoadTestCases = Left (ProviderError "uninitialized msLoadTestCases"),
       msSaveTestCase = [],
+      msReportTestResult = [],
       -----------------------------------------------
 
       -- Mock HasLanguage ------------------------
       msDetectLanguage = Left (ProviderError "uninitialized msDetectLanguage"),
-      msBuildLanguage = Left (ProviderError "uninitialized msBuildLanguage"),
-      msRunTestCase = Left (ProviderError "uninitialized msRunTestCase"),
-      msCleanupBuiltFile = Left (ProviderError "uninitialized msCleanupBuiltFile"),
+      msBuildLanguage = [],
+      msRunTestCaseArgs = [],
+      msRunTestCaseResult = Left (ProviderError "uninitialized msRunTestCaseResult"),
+      msCleanupBuiltFile = [],
       -----------------------------------------------
 
       -- Mock HasAtcoder -------------------------
@@ -249,15 +253,25 @@ instance HasSession MockApp where
     pure $ Right ()
 
 instance HasTestCase MockApp where
+  loadTestCases = gets msLoadTestCases
   saveTestCase tc = do
     modify $ \s -> s {msSaveTestCase = msSaveTestCase s ++ [tc]}
+    pure $ Right ()
+  reportTestResult (tc, got) = do
+    modify $ \s -> s {msReportTestResult = msReportTestResult s ++ [(tc, got)]}
     pure $ Right ()
 
 instance HasLanguage MockApp where
   detectLanguage = gets msDetectLanguage
-  buildLanguage _language = gets msBuildLanguage
-  runTestCase _language _tcs = gets msRunTestCase
-  cleanupBuiltFile _language = gets msCleanupBuiltFile
+  buildLanguage language = do
+    modify $ \s -> s {msBuildLanguage = msBuildLanguage s ++ [language]}
+    pure $ Right ()
+  runTestCase language tcs = do
+    modify $ \s -> s {msRunTestCaseArgs = msRunTestCaseArgs s ++ [(language, tcs)]}
+    gets msRunTestCaseResult
+  cleanupBuiltFile language = do
+    modify $ \s -> s {msCleanupBuiltFile = msCleanupBuiltFile s ++ [language]}
+    pure $ Right ()
 
 instance HasAtcoder MockApp where
   fetchProblemIds _contestId = gets msFetchProblemIds
