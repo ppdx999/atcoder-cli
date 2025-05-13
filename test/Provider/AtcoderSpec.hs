@@ -39,7 +39,7 @@ spec = describe "Provider.Atcoder" $ do
       (result, _finalState) <- execMockApp (fetchProblemIdsIO contest) initialState
 
       -- 3. Assert: 結果の検証
-      result `shouldBe` Right [ProblemId "a", ProblemId "b", ProblemId "c"]
+      result `shouldBe` Right [ProblemId "abc100_a", ProblemId "abc100_b", ProblemId "abc100_c"]
 
     it "HTTPリクエストが失敗した場合、ProviderErrorを返す" $ do
       -- 1. Arrange

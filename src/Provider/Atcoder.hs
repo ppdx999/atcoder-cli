@@ -21,7 +21,7 @@ import Data.List (isInfixOf, isPrefixOf)
 import qualified Data.List as List
 import Interface
 import Network.HTTP.Req (HttpConfig (..), defaultHttpConfig, ignoreResponse, responseStatusCode)
-import Provider.Utils (dashToUnderscore, mkURI, takeWhileEnd)
+import Provider.Utils (mkURI, takeWhileEnd)
 import Text.HTML.TagSoup
 import Text.URI (URI)
 import Types
@@ -68,8 +68,6 @@ submitPageUrlIO (Task (ContestId cid) (ProblemId pid)) =
     "https://atcoder.jp/contests/"
       <> cid
       <> "/submit?taskScreenName="
-      <> dashToUnderscore cid
-      <> "_"
       <> pid
 
 -- --- Page Fetching Helpers ---
@@ -85,8 +83,6 @@ fetchProblemPage (Task (ContestId cid) (ProblemId pid)) = do
         "https://atcoder.jp/contests/"
           <> cid
           <> "/tasks/"
-          <> dashToUnderscore cid
-          <> "_"
           <> pid
   logInfo $ "[Skeleton] Fetching test cases from: " <> url
   getHtml url
@@ -118,7 +114,7 @@ parseProblemIds html = do
     extractId :: Tag String -> String
     extractId (TagOpen "a" attrs) =
       case lookup "href" attrs of
-        Just href -> takeWhileEnd (/= '_') href
+        Just href -> takeWhileEnd (/= '/') href
         Nothing -> ""
     extractId _ = ""
 

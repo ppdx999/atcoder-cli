@@ -4,7 +4,6 @@ module Provider.Utils
     decodeUtf8,
     encodeUtf8,
     mkURI,
-    dashToUnderscore,
     crlfToLf,
     takeWhileEnd,
     join,
@@ -39,11 +38,6 @@ encodeUtf8 = TEnc.encodeUtf8 . T.pack
 
 mkURI :: (MonadThrow m) => String -> m URI.URI
 mkURI = URI.mkURI . T.pack
-
-dashToUnderscore :: String -> String
-dashToUnderscore ('-' : xs) = '_' : dashToUnderscore xs
-dashToUnderscore (x : xs) = x : dashToUnderscore xs
-dashToUnderscore [] = []
 
 crlfToLf :: String -> String
 crlfToLf ('\r' : '\n' : xs) = '\n' : crlfToLf xs
