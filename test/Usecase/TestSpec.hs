@@ -16,12 +16,11 @@ spec = describe "Usecase.Test" $ do
     -- Arrange
     let initialState =
           initialMockState
-            { msDetectLanguage = Right lang,
-              msLoadTestCases = Right [tc1, tc2],
+            { msLoadTestCases = Right [tc1, tc2],
               msRunTestCaseResult = Right runResult
             }
     -- Act
-    (result, finalState) <- execMockApp test initialState
+    (result, finalState) <- execMockApp (test lang) initialState
     -- Assert
     result `shouldBe` Right ()
 

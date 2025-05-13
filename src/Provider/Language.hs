@@ -1,5 +1,6 @@
 module Provider.Language
   ( detectLanguageIO,
+    toLanguageIO,
     c,
     cpp,
     python,
@@ -124,6 +125,21 @@ detectLanguageIO = runExceptT $ do
 
     maybeLang :: Maybe Language -> Either AppError Language
     maybeLang = maybe (Left $ ProviderError "No matching language found") Right
+
+toLanguageIO :: (HasLogger m) => String -> m (Either AppError Language)
+toLanguageIO langStr = do
+  logInfo "get language From String..."
+  return $ maybeLang $ takeFirst $ map (find langStr) langs
+  where
+    takeFirst :: [Maybe Language] -> Maybe Language
+    takeFirst = listToMaybe . catMaybes
+
+    maybeLang :: Maybe Language -> Either AppError Language
+    maybeLang = maybe (Left $ ProviderError "No matching language found") Right
+
+    find :: String -> Language -> Maybe Language
+    find str lang =
+      if str == langName lang then Just lang else Nothing
 
 buildLanguageIO :: (HasExecutor m, HasLogger m) => Language -> m (Either AppError ())
 buildLanguageIO lang = do

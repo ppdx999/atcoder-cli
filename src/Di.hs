@@ -12,7 +12,7 @@ import Provider.Clipboard (setClipboardIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
 import Provider.Executor (executeCmdIO)
 import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, removeFileIO, saveFileIO)
-import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO, runTestCaseIO)
+import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO, runTestCaseIO, toLanguageIO)
 import Provider.Logger (logErrorIO, logInfoIO)
 import Provider.Os (detectOsIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
@@ -57,6 +57,7 @@ instance HasSession IO where
 
 instance HasLanguage IO where
   detectLanguage = detectLanguageIO
+  toLanguage = toLanguageIO
   buildLanguage = buildLanguageIO
   runTestCase = runTestCaseIO
   cleanupBuiltFile = cleanupBuiltFileIO

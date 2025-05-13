@@ -11,11 +11,10 @@ test ::
     HasLanguage m,
     HasTestCase m
   ) =>
+  Language ->
   m (Either AppError ())
-test = runExceptT $ do
+test lang = runExceptT $ do
   lift $ logInfo "Testing ..."
-
-  lang <- ExceptT detectLanguage
 
   ExceptT $ buildLanguage lang
 

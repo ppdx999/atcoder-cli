@@ -1,5 +1,6 @@
 module Cli (process) where
 
+import Control.Monad.Except (ExceptT (ExceptT), runExceptT)
 import Control.Monad.IO.Class (MonadIO)
 import Interface
 import Types
@@ -31,8 +32,8 @@ process ["download"] = download
 process ["d"] = download
 process ["login"] = login
 process ["l"] = login
-process ["test"] = test
-process ["t"] = test
+process ("test" : args) = runTest args
+process ("t" : args) = runTest args
 process ["submit"] = submit
 process ["s"] = submit
 process _ =
@@ -62,3 +63,24 @@ runInit ::
   m (Either AppError ())
 runInit cid =
   either (return . Left) initContest (validateContestId cid)
+
+runTest ::
+  ( HasLogger m,
+    HasLanguage m,
+    HasTestCase m
+  ) =>
+  [String] ->
+  m (Either AppError ())
+runTest [] = runExceptT $ do
+  ExceptT detectLanguage
+    >>= ExceptT . test
+runTest ["-l", lang] = runExceptT $ do
+  ExceptT (toLanguage lang)
+    >>= ExceptT . test
+runTest _ =
+  return $
+    Left $
+      ProviderError $
+        unlines
+          [ ""
+          ]

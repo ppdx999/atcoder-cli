@@ -101,6 +101,7 @@ class (Monad m) => HasTestCase m where
 
 class (Monad m) => HasLanguage m where
   detectLanguage :: m (Either AppError Language)
+  toLanguage :: String -> m (Either AppError Language)
   buildLanguage :: Language -> m (Either AppError ())
   runTestCase :: Language -> TestCase -> m (Either AppError RunTestCaseResult)
   cleanupBuiltFile :: Language -> m (Either AppError ())
