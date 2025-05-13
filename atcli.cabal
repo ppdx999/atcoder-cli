@@ -28,6 +28,7 @@ library
       Types
       Di
       Interface
+      Cli
       Usecase.Init
       Usecase.Download
       Usecase.Login
