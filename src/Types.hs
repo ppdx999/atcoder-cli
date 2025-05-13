@@ -121,7 +121,7 @@ validateProblemId t
   | otherwise = Left (InvalidProblemId ("Invalid characters in Problem ID: " <> t))
   where
     validChars :: String
-    validChars = "abcdefghijklmnopqrstuvwxyz0123456789"
+    validChars = "abcdefghijklmnopqrstuvwxyz0123456789_"
     validChar :: Char -> Bool
     validChar c = c `elem` validChars
 
