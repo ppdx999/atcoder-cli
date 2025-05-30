@@ -50,6 +50,7 @@ class (Monad m, MonadThrow m) => HasFileSystem m where
 
 class (Monad m) => HasExecutor m where
   executeCmd :: Cmd -> Stdin -> m (Either AppError Stdout)
+  executeCmds :: [Cmd] -> Stdin -> m (Either AppError Stdout)
 
 class (Monad m) => MonadReq m where
   reqGet ::

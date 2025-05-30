@@ -10,7 +10,7 @@ import Provider.Atcoder (fetchProblemIdsIO, fetchTestCasesIO, submitPageUrlIO, v
 import Provider.Browser (openBrowserIO)
 import Provider.Clipboard (setClipboardIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
-import Provider.Executor (executeCmdIO)
+import Provider.Executor (executeCmdIO, executeCmdsIO)
 import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, removeFileIO, saveFileIO)
 import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO, runTestCaseIO, toLanguageIO)
 import Provider.Logger (logErrorIO, logInfoIO)
@@ -64,6 +64,7 @@ instance HasLanguage IO where
 
 instance HasExecutor IO where
   executeCmd = executeCmdIO
+  executeCmds = executeCmdsIO
 
 instance MonadReq IO where
   reqGet = reqGetIO
