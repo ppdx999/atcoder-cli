@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+          stack-version: 'latest'
+
+      - name: Cache Stack
+        uses: actions/cache@v4
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-
+
+      - name: Build
+        run: stack build --copy-bins --local-bin-path ./dist
+
+      - name: Create tarball
+        run: |
+          cd dist
+          tar czvf atcli-linux-x86_64.tar.gz atcli
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/atcli-linux-x86_64.tar.gz
+          generate_release_notes: true
