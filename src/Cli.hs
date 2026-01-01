@@ -26,17 +26,7 @@ process ::
   ) =>
   [String] ->
   m (Either AppError ())
-process ["init", cid] = runInit cid
-process ["i", cid] = runInit cid
-process ["download"] = download
-process ["d"] = download
-process ["login"] = login
-process ["l"] = login
-process ("test" : args) = runTest args
-process ("t" : args) = runTest args
-process ["submit"] = submit
-process ["s"] = submit
-process _ =
+process ["--help"] =
   return $
     Left $
       ProviderError $
@@ -52,6 +42,18 @@ process _ =
             "  submit",
             ""
           ]
+process ["-h"] = process ["--help"]
+process ["init", cid] = runInit cid
+process ["i", cid] = runInit cid
+process ["download"] = download
+process ["d"] = download
+process ["login"] = login
+process ["l"] = login
+process ("test" : args) = runTest args
+process ("t" : args) = runTest args
+process ["submit"] = submit
+process ["s"] = submit
+process _ = process ["--help"]
 
 runInit ::
   ( MonadIO m,
