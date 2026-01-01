@@ -29,7 +29,7 @@ process ::
 process ["--help"] =
   return $
     Left $
-      ProviderError $
+      InvalidArgument $
         unlines
           [ "Invalid arguments: Usage:",
             "atcli <command>",
@@ -82,7 +82,7 @@ runTest ["-l", lang] = runExceptT $ do
 runTest _ =
   return $
     Left $
-      ProviderError $
+      InvalidArgument $
         unlines
           [ ""
           ]

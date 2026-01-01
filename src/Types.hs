@@ -98,6 +98,7 @@ data AppError
   | InvalidProblemId String
   | InvalidSession String
   | SessionNotFound
+	| InvalidArgument String
   | ProviderError String
   deriving (Eq, Show)
 
