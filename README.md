@@ -2,7 +2,49 @@
 
 ## Install
 
-このレポジトリをクローンしてビルドしてください
+### Linux (x86_64)
+
+[GitHub Releases](https://github.com/ppdx999/atcoder-cli/releases)からダウンロード:
+
+```bash
+# ダウンロードして展開
+curl -L https://github.com/ppdx999/atcoder-cli/releases/latest/download/atcli-linux-x86_64.tar.gz | tar xz
+
+# PATHの通った場所に移動
+sudo mv atcli /usr/local/bin/
+```
+
+#### 依存関係
+
+| 環境 | コマンド | 用途 | 備考 |
+| -- | -- | -- | -- |
+| Linux | `xsel` | クリップボード操作 | 要インストール |
+| Linux | `xdg-open` | ブラウザ起動 | 要インストール |
+| macOS | `pbcopy` | クリップボード操作 | 標準搭載 |
+| macOS | `open` | ブラウザ起動 | 標準搭載 |
+| Windows | `clip` | クリップボード操作 | 標準搭載 |
+| Windows | `start` | ブラウザ起動 | 標準搭載 |
+| WSL | `iconv`, `clip.exe` | クリップボード操作 | 標準搭載 |
+| WSL | `wsl-open` | ブラウザ起動 | 要インストール |
+
+```bash
+# Arch Linux
+sudo pacman -S xsel xdg-utils
+
+# Debian/Ubuntu
+sudo apt install xsel xdg-utils
+
+# WSL (wsl-openのインストール)
+npm install -g wsl-open
+```
+
+### ソースからビルド
+
+```bash
+git clone https://github.com/ppdx999/atcoder-cli.git
+cd atcoder-cli
+stack build --copy-bins
+```
 
 ## Usage
 
