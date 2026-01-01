@@ -4,8 +4,8 @@ import Cli (process)
 import Di ()
 import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
-import System.IO (hPrint, hPutStrLn, stderr)
-import Types (AppError)
+import System.IO (hPutStrLn, stderr)
+import Types (AppError (..))
 
 main :: IO ()
 main = do
@@ -16,9 +16,17 @@ showErr result = do
   case result of
     Left err -> do
       hPutStrLn stderr "[Error]"
-      hPrint stderr err
+      hPutStrLn stderr (formatError err)
       return $ Left ()
     Right () -> return $ Right ()
+
+formatError :: AppError -> String
+formatError (InvalidContestId msg) = "Invalid contest ID: " <> msg
+formatError (InvalidProblemId msg) = "Invalid problem ID: " <> msg
+formatError (InvalidSession msg) = "Invalid session: " <> msg
+formatError SessionNotFound = "Session not found"
+formatError (InvalidArgument msg) = msg
+formatError (ProviderError msg) = msg
 
 exit :: Either () () -> IO ()
 exit result = do
