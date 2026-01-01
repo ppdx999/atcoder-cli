@@ -9,7 +9,7 @@ setClipboardIO :: (HasExecutor m, HasOs m) => String -> m (Either AppError ())
 setClipboardIO str = do
   os <- detectOs
   let cmds = case os of
-        Linux -> [Cmd ["xclip", "-selection", "clipboard"]]
+        Linux -> [Cmd ["xsel", "--clipboard", "--input"]]
         WSL -> [Cmd ["iconv", "-t", "utf16"], Cmd ["clip.exe"]]
         Mac -> [Cmd ["pbcopy"]]
         Windows -> [Cmd ["clip"]]
