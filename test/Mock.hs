@@ -86,8 +86,15 @@ data MockState = MockState
     -- Mock HasAtcoder -------------------------
     msFetchProblemIds :: Either AppError [ProblemId],
     msFetchTestCases :: Either AppError [TestCase],
+    msFetchProblemHtml :: Either AppError String,
     msVerifySession :: [Either AppError Bool],
     msSubmitPageUrl :: String,
+    -----------------------------------------------
+
+    -- Mock HasProblem -------------------------
+    msLoadProblemCachePath :: Either AppError FilePath,
+    msLoadProblemHtml :: Either AppError (Maybe String),
+    msSaveProblemHtml :: [String],
     -----------------------------------------------
 
     -- Mock HasUser--------------------------------
@@ -160,8 +167,15 @@ initialMockState =
       -- Mock HasAtcoder -------------------------
       msFetchProblemIds = Left (ProviderError "uninitialized msFetchProblemIds"),
       msFetchTestCases = Left (ProviderError "uninitialized msFetchTestCases"),
+      msFetchProblemHtml = Left (ProviderError "uninitialized msFetchProblemHtml"),
       msVerifySession = [Left (ProviderError "uninitialized msVerifySession")],
       msSubmitPageUrl = "https://example.com",
+      -----------------------------------------------
+
+      -- Mock HasProblem -------------------------
+      msLoadProblemCachePath = Left (ProviderError "uninitialized msLoadProblemCachePath"),
+      msLoadProblemHtml = Left (ProviderError "uninitialized msLoadProblemHtml"),
+      msSaveProblemHtml = [],
       -----------------------------------------------
 
       -- Mock HasUser--------------------------------
@@ -211,8 +225,11 @@ instance HasFileSystem MockApp where
       (x : xs) -> do
         modify $ \s -> s {msDoesFileExist = xs}
         pure x
+  removeFile _path = gets msRemoveFile
 
 instance MonadReq MockApp where
+  reqGet _url _proxy _config _option = error "MockApp: reqGet not implemented"
+  reqGetWithSession _session _url _proxy _config _option = error "MockApp: reqGetWithSession not implemented"
   getHtml _url = gets msGetHtml
 
 instance HasStdin MockApp where
@@ -263,6 +280,7 @@ instance HasTestCase MockApp where
 
 instance HasLanguage MockApp where
   detectLanguage = gets msDetectLanguage
+  toLanguage _langName = error "MockApp: toLanguage not implemented"
   buildLanguage language = do
     modify $ \s -> s {msBuildLanguage = msBuildLanguage s ++ [language]}
     pure $ Right ()
@@ -276,6 +294,7 @@ instance HasLanguage MockApp where
 instance HasAtcoder MockApp where
   fetchProblemIds _contestId = gets msFetchProblemIds
   fetchTestCases _task = gets msFetchTestCases
+  fetchProblemHtml _task = gets msFetchProblemHtml
   verifySession _session = do
     queue <- gets msVerifySession
     case queue of
@@ -286,6 +305,14 @@ instance HasAtcoder MockApp where
   submitPageUrl _task = do
     url <- gets msSubmitPageUrl
     mkURI (T.pack url)
+
+instance HasProblem MockApp where
+  loadProblemCachePath = gets msLoadProblemCachePath
+  loadProblemHtml = gets msLoadProblemHtml
+  saveProblemHtml html = do
+    modify $ \s -> s {msSaveProblemHtml = msSaveProblemHtml s ++ [html]}
+    pure $ Right ()
+  htmlToTerminal = pure
 
 instance HasUser MockApp where
   sendMsg msg = modify $ \s -> s {msSendMsg = msSendMsg s ++ [msg]}

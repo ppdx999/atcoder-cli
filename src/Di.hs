@@ -6,7 +6,7 @@
 module Di () where
 
 import Interface
-import Provider.Atcoder (fetchProblemIdsIO, fetchTestCasesIO, submitPageUrlIO, verifySessionIO)
+import Provider.Atcoder (fetchProblemHtmlIO, fetchProblemIdsIO, fetchTestCasesIO, submitPageUrlIO, verifySessionIO)
 import Provider.Browser (openBrowserIO)
 import Provider.Clipboard (setClipboardIO)
 import Provider.Config (loadSessionPathIO, loadTaskIO, loadTestDirIO)
@@ -14,6 +14,7 @@ import Provider.Executor (executeCmdIO, executeCmdsIO)
 import Provider.FileSystem (createDirectoryIO, createDirectoryIfMissingIO, doesFileExistIO, getCurrentDirectoryIO, readDirIO, readFileIO, removeFileIO, saveFileIO)
 import Provider.Language (buildLanguageIO, cleanupBuiltFileIO, detectLanguageIO, runTestCaseIO, toLanguageIO)
 import Provider.Logger (logErrorIO, logInfoIO)
+import Provider.Problem (htmlToTerminalIO, loadProblemCachePathIO, loadProblemHtmlIO, saveProblemHtmlIO)
 import Provider.Os (detectOsIO)
 import Provider.Req (getHtmlIO, reqGetIO, reqGetWithSessionIO)
 import Provider.Session (loadSessionIO, saveSessionIO)
@@ -43,6 +44,7 @@ instance HasConfig IO where
 instance HasAtcoder IO where
   fetchProblemIds = fetchProblemIdsIO
   fetchTestCases = fetchTestCasesIO
+  fetchProblemHtml = fetchProblemHtmlIO
   verifySession = verifySessionIO
   submitPageUrl = submitPageUrlIO
 
@@ -85,3 +87,9 @@ instance HasClipboard IO where
 
 instance HasBrowser IO where
   openBrowser = openBrowserIO
+
+instance HasProblem IO where
+  loadProblemCachePath = loadProblemCachePathIO
+  loadProblemHtml = loadProblemHtmlIO
+  saveProblemHtml = saveProblemHtmlIO
+  htmlToTerminal = htmlToTerminalIO

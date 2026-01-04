@@ -7,6 +7,7 @@ import Types
 import Usecase.Download (download)
 import Usecase.Init (initContest)
 import Usecase.Login (login)
+import Usecase.Problem (problem)
 import Usecase.Submit (submit)
 import Usecase.Test (test)
 
@@ -22,7 +23,8 @@ process ::
     HasSession m,
     HasClipboard m,
     HasUser m,
-    HasBrowser m
+    HasBrowser m,
+    HasProblem m
   ) =>
   [String] ->
   m (Either AppError ())
@@ -40,6 +42,7 @@ process ["--help"] =
             "  login",
             "  test",
             "  submit",
+            "  problem",
             ""
           ]
 process ["-h"] = process ["--help"]
@@ -53,6 +56,8 @@ process ("test" : args) = runTest args
 process ("t" : args) = runTest args
 process ["submit"] = submit
 process ["s"] = submit
+process ["problem"] = problem
+process ["p"] = problem
 process _ = process ["--help"]
 
 runInit ::

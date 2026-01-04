@@ -16,6 +16,7 @@ module Interface
     HasClipboard (..),
     HasBrowser (..),
     HasOs (..),
+    HasProblem (..),
   )
 where
 
@@ -110,8 +111,15 @@ class (Monad m) => HasLanguage m where
 class (Monad m) => HasAtcoder m where
   fetchProblemIds :: ContestId -> m (Either AppError [ProblemId])
   fetchTestCases :: Task -> m (Either AppError [TestCase])
+  fetchProblemHtml :: Task -> m (Either AppError String)
   verifySession :: Session -> m (Either AppError Bool)
   submitPageUrl :: Task -> m URI
 
 class (Monad m) => HasUser m where
   sendMsg :: String -> m ()
+
+class (Monad m) => HasProblem m where
+  loadProblemCachePath :: m (Either AppError FilePath)
+  loadProblemHtml :: m (Either AppError (Maybe String))
+  saveProblemHtml :: String -> m (Either AppError ())
+  htmlToTerminal :: String -> m String

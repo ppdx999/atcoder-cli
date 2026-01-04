@@ -7,6 +7,7 @@
 module Provider.Atcoder
   ( fetchProblemIdsIO,
     fetchTestCasesIO,
+    fetchProblemHtmlIO,
     verifySessionIO,
     submitPageUrlIO,
   )
@@ -69,6 +70,12 @@ submitPageUrlIO (Task (ContestId cid) (ProblemId pid)) =
       <> cid
       <> "/submit?taskScreenName="
       <> pid
+
+fetchProblemHtmlIO ::
+  (MonadIO m, MonadReq m, HasLogger m) =>
+  Task ->
+  m (Either AppError String)
+fetchProblemHtmlIO = fetchProblemPage
 
 -- --- Page Fetching Helpers ---
 fetchTaskPage :: (MonadIO m, MonadReq m, HasLogger m) => ContestId -> m (Either AppError String)

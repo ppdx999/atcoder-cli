@@ -49,10 +49,12 @@ library:
     - Usecase.Login
     - Usecase.Test
     - Usecase.Submit
+    - Usecase.Problem
     - Provider.Atcoder
     - Provider.Session
     - Provider.Config
     - Provider.Language
+    - Provider.Problem
 
 executables:
   atcli:
